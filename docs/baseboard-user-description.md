@@ -1,6 +1,6 @@
 # **Baseboard Start Up**
 
-![BASEBOARD LABELED](images/bb-label.png)
+![BASEBOARD LABELED](images/baseboard-label.png)
 
 ## **Powering the Board.**
 
@@ -10,7 +10,7 @@ The Baseboard can also be powered by a battery of 7.4V and the connection done v
 
 ## **Testing Power.**
 
-Power supply to the board is converted to 5V and 3.3V by the BUck Converter and 3.3V Regulator. To test the power supply, connect a multimeter and measure the voltage at the 5V and 3.3V test points as labelled on the board.
+Power supply to the board is converted to 5V and 3.3V by the Buck Converter and AMS1117 3.3V Regulator. To test the power supply, connect a multimeter and measure the voltage at the 5V and 3.3V test points as labelled on the board.
 
 ## **Ethernet.**
 
