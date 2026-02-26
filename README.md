@@ -1,3 +1,6 @@
+> [!WARNING]  
+> This repository is deprecated and no longer maintained. Please refer to the [new repository (hardware-website)](https://github.com/absmach/hardware-website) for the latest documentation.
+
 # S0 Documentation
 
 This repo collects the collaborative work on S0 documentation.
