@@ -1,0 +1,46 @@
+---
+title: WiFi Configuration
+description: Connecting S0 to WiFi in Access Point or Station Mode
+---
+
+# Connecting S0 to WiFi
+
+Since S0 is based on ESP32-C6 which has WiFi capabilities, it can be configured in Station Mode or Access Point Mode.
+
+Ensure you are in the `embedded/targets/zephyr/m0-wifi` directory.
+
+## Access Point Mode
+
+To configure the S0 as an access point, configure the parameters in `src/config.h` to your preference.
+
+Set parameters like `WIFI_AP_SSID` and `WIFI_AP_PSK` to your preference:
+
+```c
+/* AP Mode Configuration */
+#define WIFI_AP_SSID       "M0-AP"
+#define WIFI_AP_PSK        ""
+#define WIFI_AP_IP_ADDRESS "192.168.4.1"
+#define WIFI_AP_NETMASK    "255.255.255.0"
+```
+
+## Station Mode
+
+To configure S0 in station mode, configure the WiFi SSID and password in `src/config.h`:
+
+```c
+/* STA Mode Configuration */
+#define WIFI_SSID "SSID"     /* Replace `SSID` with WiFi ssid. */
+#define WIFI_PSK  "PASSWORD" /* Replace `PASSWORD` with Router password. */
+```
+
+## Building and Flashing Code
+
+Build the code and upload it to S0:
+
+```bash
+west build -p always -b esp32c6_devkitc
+west flash
+west espressif monitor
+```
+
+See the logs from the Serial Monitor to check whether S0 is connected.
