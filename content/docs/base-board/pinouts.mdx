@@ -1,0 +1,50 @@
+---
+title: Base Board Pinouts
+description: S0 Base Board pin assignments and header descriptions
+---
+
+# Base Board Pinouts
+
+![Baseboard Pin Sockets](../images/baseboard-pinout.svg)
+
+## DC Header Pinout (`J6`)
+
+| Pin      | Name | Description                 |
+| -------- | ---- | --------------------------- |
+| 1D, 1C   | GND  | Ground                      |
+| 2D, 2C   | 3V3  | 3.3V output                 |
+| 3D, 3C   | -    | Unused Pins                 |
+| 4D, 4C   | 5V   | 5V output                   |
+| 5 -- 14  | -    | Unused Pins                 |
+| 15D      | MOSI | Ethernet MOSI, SD CARD MOSI |
+| 15C      | MISO | Ethernet MISO, SD CARD MISO |
+| 16D      | SCK  | Ethernet SCK, SD CARD SCK   |
+| 16C      | -    | Unused Pin                  |
+| 17 -- 23 | -    | Unused Pins                 |
+
+## DC Header Pinout (`J5`)
+
+| Pin      | Name     | Description            |
+| -------- | -------- | ---------------------- |
+| 1B, 1A   | GND      | Ground                 |
+| 2 - 5    | -        | Unused pins            |
+| 4B       | ETH_RST  | Ethernet Reset Pin     |
+| 4A       | -        | Unused Pin             |
+| 5B       | ETH_INT  | Ethernet Interrupt Pin |
+| 5A       | -        | Unused pins            |
+| 6 -- 18  | -        | Unused pins            |
+| 19B      | MBUS_TXI | M-Bus Data Out         |
+| 19A      | MBUS_RXI | M-Bus Data In          |
+| 20 -- 21 | -        | Unused Pins            |
+| 22B      | ETH_CS   | Ethernet Chip Select   |
+| 22A      | SD_CS    | SD Card Chip Select    |
+| 22 -- 23 | GND      | GND                    |
+
+## Header Pinout (`J10`)
+
+| Pin | Name    | Description      |
+| --- | ------- | ---------------- |
+| 1   | 3V3     | 3.3V Supply      |
+| 2   | MBUS_TX | MBUS Transmitter |
+| 3   | MBUS_RX | MBUS Receiver    |
+| 4   | GND     | Ground           |

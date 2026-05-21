@@ -1,0 +1,153 @@
+---
+title: S0 IoT Gateway
+description: Swiss knife for wireless IoT - Modular multi-protocol IoT gateway
+---
+
+# S0 IoT Gateway
+
+![S0 IoT Gateway](../images/s0.png)
+
+The **S0 IoT Gateway** is a robust and modular IoT Gateway for smart metering applications. Built around the **ESP32-C6** microcontroller with a RISC-V core, it runs **Zephyr RTOS** and supports both **Wireless M-Bus (wMBus)** and **wired M-Bus** utility meters, transmitting collected data securely to [Magistrala](https://github.com/absmach/magistrala).
+
+> **S0 = S0 Board + Baseboard — Zephyr RTOS**
+>
+> Looking for a Linux-based gateway? See the [S1 Gateway](/s1-gateway), which combines the S0 Board with BeagleV-Fire.
+
+## Overview
+
+S0 collects data from multiple wireless protocols and transmits it securely to the cloud. It integrates with [Magistrala](https://github.com/absmach/magistrala), a modern, scalable, open-source IoT platform.
+
+## Hardware Architecture
+
+### Core Components
+
+| Component         | Description                                   |
+| ----------------- | --------------------------------------------- |
+| ESP32-C6          | Main microcontroller (RISC-V, WiFi, BLE)      |
+| RC-S2LP           | Wireless M-Bus 868 MHz transceiver            |
+| SIM7080G          | NB-IoT/LTE-M module                           |
+| Ethernet          | (Optional) local network through S0 Baseboard |
+| USB-C & Terminals | For power and debug                           |
+| GNSS Support      | Optional via SIM7080G for asset tracking      |
+
+The board is compact and optimized for IP-rated DIN-rail enclosures for industrial/outdoor environments. It features side-mounted IPEX connectors for each antenna (WiFi, GNSS, NB-IoT, wMBus).
+
+### Connectivity Options
+
+- **Receive Data**: WiFi, BLE, M-Bus, wM-Bus, I2C, SPI, UART
+- **Transmit Data**: NB-IoT, LTE-M, WiFi, Ethernet (via Base Board), 4G/5G
+
+### Power Management
+
+The S0 board can be powered in 3 ways:
+
+- **USB-C**: For development and testing
+- **Power JST**: Battery of maximum 7.4V connected via the battery JST connector
+- **Baseboard**: The Baseboard supplies both 5V and 3.3V to the S0 board
+
+## Wireless Communication
+
+- **WiFi/BLE**: The ESP32-C6 provides 2.4GHz Wi-Fi and BLE. An IPEX connector on the ESP32-C6 accepts a 2.4GHz antenna of your choice.
+
+- **Wireless M-Bus**: The RC-S2LP module enables wireless M-Bus communication with wMBus meters at 868 MHz. An IPEX connector accepts a 868 MHz antenna.
+
+- **NB-IoT / LTE-M**: The SIM7080G module provides NB-IoT/LTE-M connectivity. Two IPEX connectors handle RF (wireless) and GNSS (GPS) antennas. The SIM7080G is controlled via AT commands from the ESP32.
+
+## Firmware and Flashing
+
+The S0 board uses the ESP32-C6 as its main microcontroller and can be programmed using any framework of your choice. Firmware is flashed through the USB-C connector.
+
+Debug is possible via the USB-C connector or the JTAG pins labelled on the board, enabling both on-site and off-site debugging.
+
+## Software Stack
+
+### Zephyr RTOS
+
+S0 runs on Zephyr RTOS, providing:
+
+- Secure and modular firmware stack
+- Built-in protocol support (MQTT, CoAP, WebSockets, HTTP)
+- Open-source foundation for transparency and maintainability
+- Community-driven innovation
+
+### Magistrala Integration
+
+Native integration with Magistrala IoT platform:
+
+- Seamless data ingestion and device management
+- Secure cloud connectivity
+- Open-source and patent-free
+- Scalable architecture
+
+## Software Features
+
+The gateway firmware:
+
+- Collects meter data periodically from both wired and wireless M-Bus meters
+- Transmits structured data securely to Magistrala via MQTT
+- Manages reconnections and retry logic for unreliable NB-IoT networks
+- Logs diagnostics and status via UART or remote logging service
+
+Supported communication protocols:
+
+| Protocol       | Security | Description                                           |
+| -------------- | -------- | ----------------------------------------------------- |
+| **MQTT**       | No       | Lightweight messaging protocol for IoT data exchange  |
+| **MQTTS**      | Yes      | Secure MQTT communication over TLS (mTLS supported)   |
+| **CoAP**       | No       | REST-based protocol optimized for constrained devices |
+| **CoAP DTLS**  | Yes      | Secure CoAP communication using DTLS encryption       |
+| **HTTP**       | No       | Standard web communication protocol                   |
+| **HTTPS**      | Yes      | Secure version of HTTP over TLS                       |
+| **WebSockets** | Yes      | Full-duplex communication protocol over TCP           |
+
+## Expansion Options
+
+### Base Board
+
+The S0 Base Board adds:
+
+- W5500 Ethernet controller
+- TSS721A M-Bus transceiver
+- SD card slot for data logging
+- 24V DC power input
+- Battery backup with charging circuit
+- DIN-rail mounting
+
+[Learn more about Base Board](/base-board)
+
+## Use Cases
+
+### Smart Metering
+
+Deploy S0 for residential and industrial utility monitoring:
+
+- Read wireless and wired M-Bus meters
+- Backhaul via NB-IoT or LTE-M
+- DIN-rail mount in electrical cabinets
+- Battery backup for power outages
+
+### Industrial Predictive Maintenance
+
+Monitor industrial machinery for anomaly detection:
+
+- Collect high-frequency sensor data
+- Real-time edge processing
+- Local anomaly detection
+- Reduced network usage
+
+### Edge AI Inference
+
+Run AI inference at the edge:
+
+- Privacy-preserving processing
+- Low-latency decisions
+- Independent of cloud connectivity
+
+### Agricultural IoT
+
+Monitor remote farms and fields:
+
+- Soil moisture and weather monitoring
+- GNSS geo-tagging
+- Offline SD card logging
+- NB-IoT backhaul

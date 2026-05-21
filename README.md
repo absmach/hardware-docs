@@ -1,56 +1,46 @@
-> [!WARNING]  
-> This repository is deprecated and no longer maintained. Please refer to the [new repository (hardware-website)](https://github.com/absmach/hardware-website) for the latest documentation.
+# Hardware Docs
 
-# S0 Documentation
+Documentation site for [Abstract Machines Hardware](https://github.com/absmach/s0), built with [Fumadocs](https://fumadocs.dev) and Next.js.
 
-This repo collects the collaborative work on S0 documentation.
+Visiting `/` renders the intro page; all doc pages are served at their slug directly (e.g. `/s0-gateway`).
 
-Documentation is auto-generated from Markdown files in this repo.
-
-[MkDocs](https://www.mkdocs.org/) is used to serve the docs locally with different theming.
-
-## Install
-
-Doc repo can be fetched from GitHub:
+## Development
 
 ```bash
-git clone https://github.com/absmach/s0-docs.git
+pnpm install
+pnpm dev
 ```
 
-## Prerequisites
+Open http://localhost:3000 with your browser to see the result.
 
-[Python](https://www.python.org/downloads/) 3.11 or higher is required to run MkDocs.
+## Deployment
 
-1. Create a virtual environment:
+This site uses:
 
-   ```bash
-   python -m venv venv
-   ```
+- **Next.js static export** — `next build` outputs static files to `out/`
+- **GitHub Pages** — serves the `out/` directory via GitHub Actions
 
-2. Activate the virtual environment:
+### GitHub Actions (`.github/workflows/cd.yml`)
 
-   ```bash
-   source venv/bin/activate
-   ```
+Triggers on push to `main`. The workflow:
 
-3. Install [MkDocs](https://www.mkdocs.org/#installation)
+1. Builds the static site with `pnpm run build`
+2. Uploads `out/` as a Pages artifact
+3. Deploys to GitHub Pages
 
-   ```bash
-   pip install mkdocs
-   ```
+## Project structure
 
-4. Additionally, install [Material theme](https://squidfunk.github.io/mkdocs-material/):
+| Path                                   | Description                              |
+|----------------------------------------|------------------------------------------|
+| `src/app/[[...slug]]/page.tsx`         | Docs page renderer (all routes)          |
+| `src/app/api/search/route.ts`          | Static search index route handler        |
+| `src/app/og/[...slug]/route.tsx`       | OG image generation for docs pages       |
+| `src/app/llms-full.txt/route.ts`       | LLM-readable full docs text              |
+| `content/docs`                         | MDX source files                         |
+| `src/lib/source.ts`                    | Fumadocs source adapter                  |
+| `src/lib/layout.shared.tsx`            | Shared layout options (nav, logo)        |
 
-   ```bash
-   pip install mkdocs-material
-   ```
+## Learn More
 
-## Usage
-
-Use MkDocs to serve documentation:
-
-```bash
-mkdocs serve
-```
-
-Then just point the browser to [http://127.0.0.1:8000](http://127.0.0.1:8000).
+- [Fumadocs](https://fumadocs.dev)
+- [Next.js Documentation](https://nextjs.org/docs)

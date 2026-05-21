@@ -1,0 +1,49 @@
+{
+  "name": "hardware-website",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "start": "serve out",
+    "types:check": "fumadocs-mdx && next typegen && tsc --noEmit",
+    "postinstall": "fumadocs-mdx",
+    "lint": "biome check .",
+    "lint:fix": "biome check src --write",
+    "check:assets": "bash scripts/check-assets.sh",
+    "optimize:images": "f() { webp=\"${1%.*}.webp\"; magick \"$1\" -resize 1200x1200\\> -quality 82 \"$webp\" && rm \"$1\" && echo \"Converted $1 → $webp (original removed)\"; }; f",
+    "optimize:videos": "f() { ffmpeg -y -i \"$1\" -vcodec libx264 -crf 30 -preset fast -an -movflags +faststart \"${1%.mp4}-opt.mp4\" && mv \"${1%.mp4}-opt.mp4\" \"$1\" && echo \"Re-encoded $1\"; }; f",
+    "generate:poster": "f() { ffmpeg -y -i \"$1\" -ss 0 -vframes 1 -update 1 -q:v 3 \"${1%.mp4}-poster.jpg\" && echo \"Poster → ${1%.mp4}-poster.jpg\"; }; f"
+  },
+  "dependencies": {
+    "@orama/orama": "^3.1.18",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-slot": "^1.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "fumadocs-core": "16.6.8",
+    "fumadocs-mdx": "14.2.9",
+    "fumadocs-ui": "16.6.8",
+    "lucide-react": "^0.576.0",
+    "next": "16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "shiki": "^4.0.1",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.4",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "^25.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "json-schema-typed": "^8.0.2",
+    "postcss": "^8.5.6",
+    "serve": "^14.2.5",
+    "tailwindcss": "^4.2.1",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+}

@@ -1,0 +1,15 @@
+{
+  "title": "Software",
+  "pages": [
+    "index",
+    "---Examples---",
+    "wifi",
+    "mqtt",
+    "mqtts",
+    "http",
+    "https",
+    "coap",
+    "coaps",
+    "websockets"
+  ]
+}
