@@ -2,23 +2,19 @@ import { createMDX } from "fumadocs-mdx/next";
 
 const withMDX = createMDX();
 
-const isProd = process.env.NODE_ENV === "production";
-const isGitHubPages = process.env.PAGES_BASE_PATH !== undefined;
-const basePath = isProd && isGitHubPages ? process.env.PAGES_BASE_PATH : "";
+const BASE_PATH = "/docs/hardware";
 
 /** @type {import('next').NextConfig} */
 const config = {
   output: "export",
+  trailingSlash: true,
   reactStrictMode: true,
-  ...(basePath && {
-    basePath: basePath,
-    assetPrefix: basePath,
-  }),
   images: {
     unoptimized: true,
   },
+  basePath: BASE_PATH,
   env: {
-    NEXT_PUBLIC_BASE_PATH: basePath,
+    NEXT_PUBLIC_BASE_PATH: BASE_PATH,
   },
 };
 

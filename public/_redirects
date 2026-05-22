@@ -1,0 +1,3 @@
+/ /docs/hardware/ 301
+/docs/hardware/_next/* /_next/:splat 200
+/docs/hardware/* /:splat 200
