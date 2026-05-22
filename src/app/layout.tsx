@@ -15,7 +15,7 @@ const rubik = Rubik({
 });
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://hardware.absmach.eu";
+  process.env.NEXT_PUBLIC_BASE_URL || "https://absmach.eu/docs/hardware";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
