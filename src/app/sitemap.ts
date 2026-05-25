@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { source } from "@/lib/source";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://absmach.eu/docs/hardware";
+  process.env.NEXT_PUBLIC_BASE_URL || "https://www.absmach.eu/docs/hardware";
 
 export const dynamic = "force-static";
 
