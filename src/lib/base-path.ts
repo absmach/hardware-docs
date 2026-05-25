@@ -5,7 +5,7 @@
  * During build time (SSG), we use the environment variable
  * For runtime, this will be baked into the bundle
  */
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/docs/hardware";
 
 /**
  * Get the base path
@@ -19,7 +19,7 @@ export function getBasePath(): string {
  * This works for both build-time and runtime
  */
 export function assetPath(path: string): string {
-  // Ensure path starts with /
+  if (BASE_PATH && path.startsWith(BASE_PATH)) return path;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${BASE_PATH}${normalizedPath}`;
 }
