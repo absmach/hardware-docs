@@ -1,15 +1,2 @@
 / /docs/hardware/ 301
 /docs/hardware /docs/hardware/ 301
-
-/docs/hardware/ / 200
-/docs/hardware/_next/* /_next/:splat 200
-/docs/hardware/api/search /api/search 200
-/docs/hardware/og/* /og/:splat 200
-/docs/hardware/:file.:ext /:file.:ext 200
-/docs/hardware/* /:splat/ 200
-
-/api/search /api/search 200
-/og/* /og/:splat 200
-/_next/* /_next/:splat 200
-/:file.:ext /:file.:ext 200
-/* /:splat/ 200

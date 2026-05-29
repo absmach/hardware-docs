@@ -1,6 +1,6 @@
 /**
  * Get the base path for the application
- * This is used to prefix asset URLs when deploying to GitHub Pages
+ * This is used to prefix asset URLs when deploying under /docs/hardware
  *
  * During build time (SSG), we use the environment variable
  * For runtime, this will be baked into the bundle
