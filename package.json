@@ -13,6 +13,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check src --write",
     "check:assets": "bash scripts/check-assets.sh",
+    "publish-image": "node scripts/publish-image.mjs",
     "optimize:images": "f() { webp=\"${1%.*}.webp\"; magick \"$1\" -resize 1200x1200\\> -quality 82 \"$webp\" && rm \"$1\" && echo \"Converted $1 → $webp (original removed)\"; }; f",
     "optimize:videos": "f() { ffmpeg -y -i \"$1\" -vcodec libx264 -crf 30 -preset fast -an -movflags +faststart \"${1%.mp4}-opt.mp4\" && mv \"${1%.mp4}-opt.mp4\" \"$1\" && echo \"Re-encoded $1\"; }; f",
     "generate:poster": "f() { ffmpeg -y -i \"$1\" -ss 0 -vframes 1 -update 1 -q:v 3 \"${1%.mp4}-poster.jpg\" && echo \"Poster → ${1%.mp4}-poster.jpg\"; }; f"
