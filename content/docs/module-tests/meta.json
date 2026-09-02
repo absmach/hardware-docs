@@ -1,4 +1,4 @@
 {
   "title": "Module Tests",
-  "pages": ["wired-mbus", "wireless-mbus"]
+  "pages": ["wired-mbus", "wireless-mbus", "esp32-c6"]
 }
