@@ -1,0 +1,193 @@
+---
+title: E07-400M10S Sub-GHz
+description: E07-400M10S (CC1101-based) transceiver overview, BUS1 hardware connection, and test procedure
+---
+
+# E07-400M10S Sub-GHz Transceiver
+
+## Introduction
+
+The **E07-400M10S** is an EBYTE sub-GHz radio module (LCSC `C2965513`) built around the **Texas Instruments CC1101** transceiver.
+
+On the A0 board, the E07-400M10S plugs into **BUS1** the same way the RC-S2LP wM-Bus module does — they're interchangeable on the same physical slot.
+
+## What the E07-400M10S Is Used For
+
+- Sub-GHz point-to-point / star-topology RF links
+- Low-power telemetry and sensor backhaul
+- Custom proprietary protocols over FSK/GFSK/ASK/OOK
+
+## Key Specifications
+
+| Feature           | Description                    |
+| ----------------- | ------------------------------ |
+| RF IC             | Texas Instruments CC1101       |
+| Frequency Band    | ~410–441 MHz (per part number) |
+| Modulation        | 2-FSK, GFSK, ASK/OOK, MSK      |
+| Output Power      | Up to +10 dBm                  |
+| Interface         | SPI                            |
+| Operating Voltage | 1.8 V – 3.6 V                  |
+
+## Hardware Connection
+
+### Connection on the A0 Board (BUS 1)
+
+The E07-400M10S plugs into **BUS 1** (headers **J1 + J3**). Unlike the wM-Bus module, this pinout wasn't guessed and then verified — it was pulled directly from the module's own schematic (`modules/E07400M10S/E07400M10S.kicad_sch`) via `kicad-cli sch export netlist`, which showed the module's connector is a pin-for-pin match to A0's BUS1 layout. Confirmed working on hardware (see [Verified Result](#verified-result)):
+
+| E07-400M10S Pin        | MCU Pin (ESP32-C6) | BUS1 Header Pin                                                      |
+| ---------------------- | ------------------ | -------------------------------------------------------------------- |
+| SCK                    | GPIO20             | J1 pin 4                                                             |
+| MISO                   | GPIO19             | J1 pin 5                                                             |
+| MOSI                   | GPIO18             | J1 pin 6                                                             |
+| CS (CSN)               | GPIO2              | J1 pin 3 — same physical pin verified working for the RC-S2LP module |
+| GDO0                   | GPIO1              | J1 pin 2                                                             |
+| GDO1 (chip's GDO2 pin) | GPIO0              | J3 pin 2                                                             |
+| VCC                    | +3V3               | J1 pin 7                                                             |
+| GND                    | GND                | J1 / J3 pin 8                                                        |
+
+No power ambiguity here: the module's connector only ever exposes `VCC` on `J1.7`, which the A0 board hard-wires to `+3V3` — there's no equivalent to the wM-Bus module's `FB_5V` mix-up risk.
+
+The module has no separate hardware reset pin — the CC1101 is reset purely over SPI via the `SRES` command strobe.
+
+## Software Test Procedure
+
+### Test Objective
+
+The test verifies SPI-level bring-up without needing an antenna or a peer radio in range:
+
+- The E07-400M10S is powered correctly
+- SPI communication is functional
+- The chip identifies itself correctly (`PARTNUM`/`VERSION`)
+- The state machine reaches `IDLE` after reset
+
+### SPI Communication Test
+
+> **Protocol note**: the CC1101 uses a different SPI header convention than the RC-S2LP (see [Wireless M-Bus Testing](./wireless-mbus)) — don't mix the two up. CC1101 register access encodes read/write and burst mode into the top two bits of the address byte (`addr | 0x80` = single read, `addr | 0xC0` = burst read, `addr` alone = write); the S2-LP instead uses distinct header bytes (`0x00`/`0x01`/`0x80`). Status registers like `PARTNUM`/`VERSION` are read with the **burst** bit set even for a single byte.
+>
+> The CC1101 also expects `MISO` to go low (indicating its crystal oscillator is stable) after `CS` is asserted, before you clock out a header byte — skipping this on the first access after power-up/reset is a common cause of a bad first read.
+
+```c
+#include <SPI.h>
+
+// E07-400M10S (CC1101-based) - A0 board, BUS1
+#define PIN_SPI_SCK  20
+#define PIN_SPI_MISO 19
+#define PIN_SPI_MOSI 18
+#define CS_PIN        2
+#define GDO0_PIN      1
+#define GDO1_PIN      0
+
+// CC1101 SPI header conventions (distinct from the S2LP's WRITE/READ/STROBE
+// byte scheme used for the RC-S2LP module)
+#define CC1101_WRITE_SINGLE 0x00
+#define CC1101_READ_BURST   0xC0
+
+// CC1101 command strobes
+#define CC1101_SRES  0x30 // Reset
+#define CC1101_SIDLE 0x36 // Go to IDLE state
+
+// CC1101 status registers (read with the burst bit set: addr | 0xC0)
+#define CC1101_PARTNUM   0x30 // expect 0x00 for a genuine CC1101
+#define CC1101_VERSION   0x31 // non-zero silicon revision byte
+#define CC1101_MARCSTATE 0x35 // state machine status
+
+SPIClass *cc1101Spi = NULL;
+
+void csSelect() {
+  digitalWrite(CS_PIN, LOW);
+  // CC1101 pulls MISO low once its crystal oscillator is stable; wait for
+  // that before clocking data, especially right after reset/power-up.
+  uint32_t start = millis();
+  while (digitalRead(PIN_SPI_MISO) == HIGH) {
+    if (millis() - start > 500) break; // don't hang forever if miswired
+  }
+}
+
+void csDeselect() {
+  digitalWrite(CS_PIN, HIGH);
+}
+
+void cc1101Strobe(uint8_t strobe) {
+  csSelect();
+  cc1101Spi->transfer(strobe);
+  csDeselect();
+}
+
+uint8_t cc1101ReadStatusReg(uint8_t addr) {
+  csSelect();
+  cc1101Spi->transfer(addr | CC1101_READ_BURST);
+  uint8_t value = cc1101Spi->transfer(0x00);
+  csDeselect();
+  return value;
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  Serial.println("=== E07-400M10S (CC1101) Test - A0 BUS1 ===");
+
+  pinMode(CS_PIN, OUTPUT);
+  digitalWrite(CS_PIN, HIGH);
+  pinMode(GDO0_PIN, INPUT);
+  pinMode(GDO1_PIN, INPUT);
+
+  cc1101Spi = new SPIClass(FSPI);
+  cc1101Spi->begin(PIN_SPI_SCK, PIN_SPI_MISO, PIN_SPI_MOSI, CS_PIN);
+  cc1101Spi->setFrequency(1000000);
+  cc1101Spi->setDataMode(SPI_MODE0);
+
+  Serial.println("Sending SRES (reset strobe)...");
+  cc1101Strobe(CC1101_SRES);
+  delay(10);
+
+  uint8_t partnum   = cc1101ReadStatusReg(CC1101_PARTNUM);
+  uint8_t version   = cc1101ReadStatusReg(CC1101_VERSION);
+  uint8_t marcstate = cc1101ReadStatusReg(CC1101_MARCSTATE) & 0x1F;
+
+  Serial.print("PARTNUM   (0x30): 0x"); Serial.println(partnum, HEX);
+  Serial.print("VERSION   (0x31): 0x"); Serial.println(version, HEX);
+  Serial.print("MARCSTATE (0x35): 0x"); Serial.println(marcstate, HEX);
+
+  if (version != 0xFF && version != 0x00) {
+    Serial.println("RESULT: Got a plausible VERSION byte - SPI link is good.");
+  } else {
+    Serial.println("RESULT: VERSION read as 0x00/0xFF - check wiring; MISO");
+    Serial.println("        may be floating, or CS/SCK/MOSI/MISO are on the");
+    Serial.println("        wrong BUS1 pin.");
+  }
+
+  cc1101Strobe(CC1101_SIDLE);
+}
+
+void loop() {
+  uint8_t marcstate = cc1101ReadStatusReg(CC1101_MARCSTATE) & 0x1F;
+  Serial.print("MARCSTATE: 0x");
+  Serial.print(marcstate, HEX);
+  Serial.print("  GDO0="); Serial.print(digitalRead(GDO0_PIN));
+  Serial.print(" GDO1="); Serial.println(digitalRead(GDO1_PIN));
+  delay(2000);
+}
+```
+
+### Verified Result
+
+Run on the A0 board with the E07-400M10S seated on BUS1, in place of the RC-S2LP module (`esp32:esp32:esp32c6:CDCOnBoot=cdc`):
+
+```
+=== E07-400M10S (CC1101) Test - A0 BUS1 ===
+Sending SRES (reset strobe)...
+PARTNUM   (0x30): 0x0
+VERSION   (0x31): 0x14
+MARCSTATE (0x35): 0x1
+RESULT: Got a plausible VERSION byte - SPI link is good.
+MARCSTATE: 0x1  GDO0=1 GDO1=0
+```
+
+- `PARTNUM = 0x00` — exactly what a genuine CC1101 reports.
+- `VERSION = 0x14` — a standard, widely-seen CC1101 silicon revision byte.
+- `MARCSTATE = 0x01` — the `IDLE` state, exactly where it should sit after `SRES` + `SIDLE`.
+
+`GDO0` toggling between reads is its default post-reset pin function (not an SPI fault) — configure it to a known function (e.g. `CHIP_RDYn` or packet-status) via `IOCFG0` before relying on it for anything.
+
+This confirms SPI-level bring-up only. RF transmit/receive against a second radio is a separate follow-up test.
