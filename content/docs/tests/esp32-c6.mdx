@@ -150,3 +150,17 @@ Hello from A0 (ESP32-C6)
 ```
 
 A clean, uninterrupted stream like this (and a `journalctl -k` with no further `usb 1-1: USB disconnect` churn) confirms the boot loop is resolved.
+
+## Next Steps
+
+With the MCU booting cleanly, verify the BUS1 radio modules:
+
+- [Wireless M-Bus Testing](./wireless-mbus) — RC-S2LP (S2-LP) SPI bring-up on BUS1 (GPIO20/19/18, CS GPIO2, SDN GPIO1)
+- [E07-400M10S Sub-GHz](./e07-400m10s) — CC1101 SPI bring-up on the same BUS1 slot (GDO0 GPIO1, GDO1 GPIO0)
+
+## References
+
+- ESP32-C6 SoC — [product page](https://www.espressif.com/en/products/socs/esp32-c6) · [datasheet (PDF)](https://www.espressif.com/sites/default/files/documentation/esp32-c6_datasheet_en.pdf)
+- ESP32-C6-MINI-1 module — [dev-kit docs](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitm-1/index.html)
+- Arduino-ESP32 C6 support — [installation](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html)
+- esptool — [documentation](https://docs.espressif.com/projects/esptool/en/latest/esp32c6/)

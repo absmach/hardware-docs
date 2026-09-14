@@ -191,3 +191,8 @@ MARCSTATE: 0x1  GDO0=1 GDO1=0
 `GDO0` toggling between reads is its default post-reset pin function (not an SPI fault) — configure it to a known function (e.g. `CHIP_RDYn` or packet-status) via `IOCFG0` before relying on it for anything.
 
 This confirms SPI-level bring-up only. RF transmit/receive against a second radio is a separate follow-up test.
+
+## References
+
+- TI CC1101 transceiver — [product page](https://www.ti.com/product/CC1101) · [datasheet (PDF)](https://www.ti.com/lit/ds/symlink/cc1101.pdf)
+- Sibling test on shared BUS1 slot — [Wireless M-Bus Testing](./wireless-mbus)
