@@ -7,11 +7,11 @@ description: Swiss knife for wireless IoT - Modular multi-protocol IoT gateway
 
 ![A0 IoT Gateway](../images/A0-front-pcb.png)
 
-The **A0 IoT Gateway** is a robust and modular IoT Gateway for smart metering applications. Built around the **ESP32-C6** microcontroller with a RISC-V core, it runs **Zephyr RTOS** and supports both **Wireless M-Bus (wMBus)** and **wired M-Bus** utility meters, transmitting collected data securely to [Magistrala](https://github.com/absmach/magistrala).
+The **A0 IoT Gateway** is a robust and modular IoT Gateway for smart metering applications. Built around the **ESP32-C6** microcontroller with a RISC-V core, it runs **Zephyr RTOS** and supports **Wireless M-Bus (wMBus)** utility meters via a plug-in module, transmitting collected data securely to [Magistrala](https://github.com/absmach/magistrala).
 
 > **A0 = A0 Base Board + ESP32-C6 Module + Expansion Modules — Zephyr RTOS**
 >
-> Looking for a Linux-based gateway? See the [A1 Gateway](/a1-gateway), which combines the A0 Board with BeagleV-Fire.
+> Looking for a Linux-based gateway? See the [A1 Gateway](../a1), which combines the A0 Board with BeagleV-Fire.
 
 ## Overview
 
@@ -19,7 +19,7 @@ A0 collects data from multiple wireless protocols and transmits it securely to t
 
 ## Hardware Architecture
 
-The A0 gateway is built on the **A0 base board** — a low-power, battery-capable carrier with external power supply support — with an **ESP32-C6 module on top**. Additional radio and cellular connectivity is added via **two plug-in expansion slots, BUS1 and BUS2**, where any supported [module](/base-board/modules) can be fitted.
+The A0 gateway is built on the **A0 base board** — a low-power, battery-capable carrier with external power supply support — with an **ESP32-C6 module on top**. Additional radio and cellular connectivity is added via **two plug-in expansion slots, BUS1 and BUS2**, where any supported [module](./modules/modules) can be fitted.
 
 ### ESP32-C6 Module
 
@@ -45,23 +45,22 @@ Wi-Fi 6 features (OFDMA, MU-MIMO, TWT) deliver low latency and multi-year batter
 | SIM7080G          | NB-IoT/LTE-M + GNSS module (optional)                                                             |
 | WMBUS             | Wireless M-Bus module (optional)                                                                  |
 | E07-400M10S       | Sub-GHz 400 MHz module (optional)                                                                 |
-| MikroE Click™     | Any [MikroE Click board](/base-board/modules#mikroe-click-compatibility) via the shared footprint |
 | USB-C & Terminals | For power and debug                                                                               |
 
-The board is compact and optimized for IP-rated DIN-rail enclosures for industrial/outdoor environments. It features side-mounted IPEX connectors for each antenna (WiFi, GNSS, NB-IoT, wMBus).
+The board exposes IPEX antenna connectors per radio (Wi-Fi, GNSS/NB-IoT, wM-Bus — depending on fitted modules).
 
 ### Connectivity Options
 
-- **Receive Data**: WiFi, BLE, M-Bus, wM-Bus, I2C, SPI, UART
-- **Transmit Data**: NB-IoT, LTE-M, WiFi, Ethernet (via Base Board), 4G/5G
+- **Receive Data**: WiFi, BLE, 802.15.4, Wireless M-Bus, sub-GHz, I2C, SPI, UART
+- **Transmit Data**: NB-IoT, LTE-M, WiFi
 
 ### Power Management
 
 The A0 board can be powered in 3 ways:
 
 - **USB-C**: For development and testing
-- **Power JST**: Battery of maximum 7.4V connected via the battery JST connector
-- **Baseboard**: The Baseboard supplies both 5V and 3.3V to the A0 board
+- **External supply**: Via the supply input terminal
+- **Battery**: Via the battery JST connector, with charging support
 
 ## Wireless Communication
 
@@ -101,7 +100,7 @@ Native integration with Magistrala IoT platform:
 
 The gateway firmware:
 
-- Collects meter data periodically from both wired and wireless M-Bus meters
+- Collects meter data periodically from Wireless M-Bus meters
 - Transmits structured data securely to Magistrala via MQTT
 - Manages reconnections and retry logic for unreliable NB-IoT networks
 - Logs diagnostics and status via UART or remote logging service
@@ -128,6 +127,6 @@ The A0 base board provides two expansion slots (BUS1 and BUS2) supporting the in
 - **WMBUS** — Wireless M-Bus metering radio
 - **E07-400M10S** — Sub-GHz (400 MHz, 10 dBm) radio
 
-Because the expansion slots use the **MikroE Click footprint**, the entire [MikroE Click boards™](https://www.mikroe.com/) ecosystem is also supported — hundreds of off-the-shelf boards (LTE, LoRa, RF, sensors, storage, and more) plug in directly.
+Because the expansion slots use the **MikroE Click footprint**, the [MikroE Click boards™](https://www.mikroe.com/) ecosystem is also supported — see [Modules](./modules/modules#mikroe-click-compatibility).
 
-[Learn more about Modules](/base-board/modules)
+[Learn more about Modules](./modules/modules)
