@@ -1,0 +1,133 @@
+---
+title: A0 IoT Gateway
+description: Swiss knife for wireless IoT - Modular multi-protocol IoT gateway
+---
+
+# A0 IoT Gateway
+
+![A0 IoT Gateway](../images/A0-front-pcb.png)
+
+The **A0 IoT Gateway** is a robust and modular IoT Gateway for smart metering applications. Built around the **ESP32-C6** microcontroller with a RISC-V core, it runs **Zephyr RTOS** and supports both **Wireless M-Bus (wMBus)** and **wired M-Bus** utility meters, transmitting collected data securely to [Magistrala](https://github.com/absmach/magistrala).
+
+> **A0 = A0 Base Board + ESP32-C6 Module + Expansion Modules — Zephyr RTOS**
+>
+> Looking for a Linux-based gateway? See the [A1 Gateway](/a1-gateway), which combines the A0 Board with BeagleV-Fire.
+
+## Overview
+
+A0 collects data from multiple wireless protocols and transmits it securely to the cloud. It integrates with [Magistrala](https://github.com/absmach/magistrala), a modern, scalable, open-source IoT platform.
+
+## Hardware Architecture
+
+The A0 gateway is built on the **A0 base board** — a low-power, battery-capable carrier with external power supply support — with an **ESP32-C6 module on top**. Additional radio and cellular connectivity is added via **two plug-in expansion slots, BUS1 and BUS2**, where any supported [module](/base-board/modules) can be fitted.
+
+### ESP32-C6 Module
+
+The ESP32-C6 is Espressif's first Wi-Fi 6 SoC, integrating 2.4 GHz Wi-Fi 6 (802.11ax), Bluetooth 5 (LE), and IEEE 802.15.4 (Thread/Zigbee) in a single low-power chip. Key specifications:
+
+| Spec         | Details                                                                                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **CPU**      | High-performance 32-bit RISC-V core up to **160 MHz** + low-power (LP) 32-bit RISC-V core up to **20 MHz**                                                                                       |
+| **Memory**   | 320 KB ROM, 512 KB SRAM, external flash                                                                                                                                                          |
+| **Wireless** | Wi-Fi 6 (802.11ax, 20 MHz) + 802.11 b/g/n (20/40 MHz); OFDMA up/downlink, downlink MU-MIMO, Target Wake Time (TWT); Bluetooth 5 LE (coded PHY long-range, 2 Mbps high-throughput); IEEE 802.15.4 |
+| **Security** | RSA-3072 secure boot, AES-128/256-XTS flash encryption, digital signature & HMAC peripherals, hardware crypto accelerators, Trusted Execution Environment (TEE)                                  |
+| **Software** | ESP-IDF, Zephyr RTOS, ESP-Hosted / ESP-AT, ESP RainMaker                                                                                                                                         |
+
+Wi-Fi 6 features (OFDMA, MU-MIMO, TWT) deliver low latency and multi-year battery life in congested RF environments, while the combined Wi-Fi + BLE + 802.15.4 radios enable Matter, Thread Border Router, and Zigbee scenarios.
+
+### Core Components
+
+| Component         | Description                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| ESP32-C6 module   | Main microcontroller (RISC-V, Wi-Fi 6, BLE, 802.15.4), mounted on the A0 base board               |
+| A0 base board     | USB-C, external power supply, and battery support with charging                                   |
+| BUS1 / BUS2       | Two expansion slots for plug-in connectivity modules                                              |
+| SIM7080G          | NB-IoT/LTE-M + GNSS module (optional)                                                             |
+| WMBUS             | Wireless M-Bus module (optional)                                                                  |
+| E07-400M10S       | Sub-GHz 400 MHz module (optional)                                                                 |
+| MikroE Click™     | Any [MikroE Click board](/base-board/modules#mikroe-click-compatibility) via the shared footprint |
+| USB-C & Terminals | For power and debug                                                                               |
+
+The board is compact and optimized for IP-rated DIN-rail enclosures for industrial/outdoor environments. It features side-mounted IPEX connectors for each antenna (WiFi, GNSS, NB-IoT, wMBus).
+
+### Connectivity Options
+
+- **Receive Data**: WiFi, BLE, M-Bus, wM-Bus, I2C, SPI, UART
+- **Transmit Data**: NB-IoT, LTE-M, WiFi, Ethernet (via Base Board), 4G/5G
+
+### Power Management
+
+The A0 board can be powered in 3 ways:
+
+- **USB-C**: For development and testing
+- **Power JST**: Battery of maximum 7.4V connected via the battery JST connector
+- **Baseboard**: The Baseboard supplies both 5V and 3.3V to the A0 board
+
+## Wireless Communication
+
+- **WiFi/BLE**: The ESP32-C6 provides 2.4GHz Wi-Fi and BLE. An IPEX connector on the ESP32-C6 accepts a 2.4GHz antenna of your choice.
+
+- **Wireless M-Bus**: The plug-in WMBUS module (S2-LP-based) enables wireless M-Bus communication with wMBus meters at 868 MHz. An IPEX connector accepts a 868 MHz antenna.
+
+- **NB-IoT / LTE-M**: The SIM7080G module provides NB-IoT/LTE-M connectivity. Two IPEX connectors handle RF (wireless) and GNSS (GPS) antennas. The SIM7080G is controlled via AT commands from the ESP32.
+
+## Firmware and Flashing
+
+The A0 board uses the ESP32-C6 as its main microcontroller and can be programmed using any framework of your choice. Firmware is flashed through the USB-C connector.
+
+Debug is possible via the USB-C connector or the JTAG pins labelled on the board, enabling both on-site and off-site debugging.
+
+## Software Stack
+
+### Zephyr RTOS
+
+A0 runs on Zephyr RTOS, providing:
+
+- Secure and modular firmware stack
+- Built-in protocol support (MQTT, CoAP, WebSockets, HTTP)
+- Open-source foundation for transparency and maintainability
+- Community-driven innovation
+
+### Magistrala Integration
+
+Native integration with Magistrala IoT platform:
+
+- Seamless data ingestion and device management
+- Secure cloud connectivity
+- Open-source and patent-free
+- Scalable architecture
+
+## Software Features
+
+The gateway firmware:
+
+- Collects meter data periodically from both wired and wireless M-Bus meters
+- Transmits structured data securely to Magistrala via MQTT
+- Manages reconnections and retry logic for unreliable NB-IoT networks
+- Logs diagnostics and status via UART or remote logging service
+
+Supported communication protocols:
+
+| Protocol       | Security | Description                                           |
+| -------------- | -------- | ----------------------------------------------------- |
+| **MQTT**       | No       | Lightweight messaging protocol for IoT data exchange  |
+| **MQTTS**      | Yes      | Secure MQTT communication over TLS (mTLS supported)   |
+| **CoAP**       | No       | REST-based protocol optimized for constrained devices |
+| **CoAP DTLS**  | Yes      | Secure CoAP communication using DTLS encryption       |
+| **HTTP**       | No       | Standard web communication protocol                   |
+| **HTTPS**      | Yes      | Secure version of HTTP over TLS                       |
+| **WebSockets** | Yes      | Full-duplex communication protocol over TCP           |
+
+## Expansion Options
+
+### Expansion Modules (BUS1 / BUS2)
+
+The A0 base board provides two expansion slots (BUS1 and BUS2) supporting the in-house modules:
+
+- **SIM7080G** — NB-IoT/LTE-M cellular uplink + GNSS
+- **WMBUS** — Wireless M-Bus metering radio
+- **E07-400M10S** — Sub-GHz (400 MHz, 10 dBm) radio
+
+Because the expansion slots use the **MikroE Click footprint**, the entire [MikroE Click boards™](https://www.mikroe.com/) ecosystem is also supported — hundreds of off-the-shelf boards (LTE, LoRa, RF, sensors, storage, and more) plug in directly.
+
+[Learn more about Modules](/base-board/modules)

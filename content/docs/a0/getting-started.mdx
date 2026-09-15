@@ -1,19 +1,19 @@
 ---
-title: Getting Started with S0
-description: Quick start guide for S0 IoT Gateway
+title: Getting Started with A0
+description: Quick start guide for A0 IoT Gateway
 ---
 
-# Getting Started with S0
+# Getting Started with A0
 
-This guide will help you get up and running with the S0 IoT Gateway.
+This guide will help you get up and running with the A0 IoT Gateway.
 
 ## What You'll Need
 
 ### Hardware
 
-- S0 IoT Gateway module
+- A0 IoT Gateway module
 - USB-C cable for power and programming
-- Optional: S0 Base Board for expanded functionality
+- Optional: A0 Base Board for expanded functionality
 
 ### Software
 
@@ -30,7 +30,7 @@ This guide will help you get up and running with the S0 IoT Gateway.
 
 ### Install Zephyr OS
 
-To program and build firmware for the S0 board, install **Zephyr OS** from the official website:
+To program and build firmware for the A0 board, install **Zephyr OS** from the official website:
 
 [https://docs.zephyrproject.org/latest/develop/getting_started/index.html](https://docs.zephyrproject.org/latest/develop/getting_started/index.html)
 
@@ -41,7 +41,7 @@ Zephyr provides:
 - Networking and protocol stacks
 - Secure communication and TLS support
 
-Once Zephyr is installed, you can build and flash applications directly to the S0 board using `west`.
+Once Zephyr is installed, you can build and flash applications directly to the A0 board using `west`.
 
 ### Clone the Embedded Repository
 
@@ -101,7 +101,7 @@ west build -p always -b esp32c6_devkitc
 
 The board parameter can be changed to whichever board you are using as long as it is recognized by Zephyr. See [Zephyr supported boards](https://docs.zephyrproject.org/latest/boards/index.html#) for more information.
 
-To upload code to the S0 and monitor the serial output:
+To upload code to the A0 and monitor the serial output:
 
 ```bash
 west flash
@@ -110,7 +110,4 @@ west espressif monitor
 
 ## Next Steps
 
-- [S0 Pinouts](/s0-gateway/pinouts) — Pin assignments and header descriptions
-- [S0 Architecture](/s0-gateway/architecture) — Board schematics and circuit diagrams
-- [Software Overview](/s0-gateway/software) — Communication protocols and examples
-- [Base Board](/base-board) — Expand S0 with Ethernet, M-Bus, and power management
+- [Software Overview](/a0/software) — Communication protocols and examples

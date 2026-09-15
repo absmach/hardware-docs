@@ -10,6 +10,6 @@
     "https",
     "coap",
     "coaps",
-    "websockets"
+    "websocket"
   ]
 }
