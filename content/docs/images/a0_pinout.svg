@@ -4,9 +4,9 @@
    version="1.2"
    width="978"
    id="svg294"
-   sodipodi:docname="s0_pinout.svg"
+   sodipodi:docname="a0_pinout.svg"
    xml:space="preserve"
-   inkscape:export-filename="s0_pinout_edited.png"
+   inkscape:export-filename="a0_pinout_edited.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
    inkscape:version="1.4.2 (2aeb623e1d, 2025-05-12)"
@@ -1894,7 +1894,7 @@
        id="tspan296"
        x="433.28445"
        y="111.32234"
-       style="font-weight:bold;stroke-width:5.11599">S0 PINOUT</tspan></text><image
+       style="font-weight:bold;stroke-width:5.11599">A0 PINOUT</tspan></text><image
      width="350.96545"
      height="544.61951"
      preserveAspectRatio="none"
@@ -1913,7 +1913,7 @@
        id="tspan297"
        x="360.44443"
        y="50.304161"
-       style="font-weight:bold;stroke-width:4.67037">S0 PINOUT</tspan></text><image
+       style="font-weight:bold;stroke-width:4.67037">A0 PINOUT</tspan></text><image
      width="38.404911"
      height="364.31949"
      preserveAspectRatio="none"

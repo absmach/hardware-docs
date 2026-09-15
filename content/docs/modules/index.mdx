@@ -1,0 +1,29 @@
+---
+title: A0 - Modules
+description: The A0 — ESP32-C6 module carrier with battery and external power support and two expansion slots (BUS1/BUS2).
+---
+
+# A0
+
+![A0 Board](../images/A0-front-pcb.png)
+
+The **A0** is the base board of the modular IoT gateway. It replaces the earlier A0 Board + A0 Base Board split with a single carrier that mounts an **ESP32-C6 module on top** and pushes all additional radio/cellular connectivity onto plug-in **modules**.
+
+## Overview
+
+A0 provides everything needed to power and run the gateway, while expansion slots (BUS1/BUS2) carry the connectivity:
+
+- **ESP32-C6 module on top** — main compute plus Wi-Fi 6, Bluetooth 5 LE, and IEEE 802.15.4 connectivity. See the [ESP32-C6 details](/a0-gateway#esp32-c6-module) for full specifications.
+- **Power**:
+  - USB-C power input
+  - External power supply input
+  - Battery support (with charging)
+- **Expansion**: two module slots, **BUS1** and **BUS2**, where any of the following can be plugged in:
+  - **SIM7080G** — NB-IoT/LTE-M cellular + GNSS
+  - **WMBUS** — Wireless M-Bus metering radio
+  - **E07-400M10S** — Sub-GHz radio (400 MHz, 10 dBm)
+  - Any **[MikroE Click™](https://www.mikroe.com/)** board, since the expansion slots use the Click footprint
+
+## Modules
+
+See the [Modules](./modules) page for the full module list, MikroE Click compatibility, and module details.
