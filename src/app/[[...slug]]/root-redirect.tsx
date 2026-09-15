@@ -5,7 +5,7 @@ import { useEffect } from "react";
 export function RootRedirect() {
   const router = useRouter();
   useEffect(() => {
-    router.replace("/s0-gateway");
+    router.replace("/a0-gateway");
   }, [router]);
   return null;
 }
