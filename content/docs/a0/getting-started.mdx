@@ -21,6 +21,8 @@ This guide will help you get up and running with the A0 IoT Gateway.
 - Serial terminal (minicom, screen, or PuTTY)
 - Git
 
+> **JTAG vs BUS2 — pick one**: DIP switch **SW5** routes GPIO4–GPIO7 either to the JTAG header (J10) or to the BUS2 UART/I2C lines. **BUS2 UART or I2C and JTAG cannot be used simultaneously** — set SW5 to the JTAG side for debugging, or to the BUS2 side for a BUS2 module. See the [A0 Base Board](./base-board#sw5--jtag--bus2-selector) for details.
+
 ### Accounts
 
 - [Magistrala](https://cloud.magistrala.absmach.eu) account (cloud or local instance)

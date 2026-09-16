@@ -19,7 +19,7 @@ A0 collects data from multiple wireless protocols and transmits it securely to t
 
 ## Hardware Architecture
 
-The A0 gateway is built on the **A0 base board** — a low-power, battery-capable carrier with external power supply support — with an **ESP32-C6 module on top**. Additional radio and cellular connectivity is added via **two plug-in expansion slots, BUS1 and BUS2**, where any supported [module](./modules/modules) can be fitted.
+The A0 gateway is built on the **A0 base board** — a low-power, battery-capable carrier with external power supply support — with an **ESP32-C6 module on top**. Additional radio and cellular connectivity is added via **two plug-in expansion slots, BUS1 and BUS2**, where any supported [module](./modules) can be fitted.
 
 ### ESP32-C6 Module
 
@@ -37,15 +37,15 @@ Wi-Fi 6 features (OFDMA, MU-MIMO, TWT) deliver low latency and multi-year batter
 
 ### Core Components
 
-| Component         | Description                                                                                       |
-| ----------------- | ------------------------------------------------------------------------------------------------- |
-| ESP32-C6 module   | Main microcontroller (RISC-V, Wi-Fi 6, BLE, 802.15.4), mounted on the A0 base board               |
-| A0 base board     | USB-C, external power supply, and battery support with charging                                   |
-| BUS1 / BUS2       | Two expansion slots for plug-in connectivity modules                                              |
-| SIM7080G          | NB-IoT/LTE-M + GNSS module (optional)                                                             |
-| WMBUS             | Wireless M-Bus module (optional)                                                                  |
-| E07-400M10S       | Sub-GHz 400 MHz module (optional)                                                                 |
-| USB-C & Terminals | For power and debug                                                                               |
+| Component         | Description                                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ESP32-C6 module   | Main microcontroller (RISC-V, Wi-Fi 6, BLE, 802.15.4), mounted on the A0 base board                                                                  |
+| A0 base board     | USB-C, external supply, and battery with charging (MCP73831 charger + XL1509-5.0 buck → AMS1117-3.3 LDO pair — see [Base Board](./base-board#power)) |
+| BUS1 / BUS2       | Two expansion slots for plug-in connectivity modules                                                                                                 |
+| SIM7080G          | NB-IoT/LTE-M + GNSS module (optional)                                                                                                                |
+| WMBUS             | Wireless M-Bus module (optional)                                                                                                                     |
+| E07-400M10S       | Sub-GHz 400 MHz module (optional)                                                                                                                    |
+| USB-C & Terminals | For power and debug                                                                                                                                  |
 
 The board exposes IPEX antenna connectors per radio (Wi-Fi, GNSS/NB-IoT, wM-Bus — depending on fitted modules).
 
@@ -59,8 +59,10 @@ The board exposes IPEX antenna connectors per radio (Wi-Fi, GNSS/NB-IoT, wM-Bus 
 The A0 board can be powered in 3 ways:
 
 - **USB-C**: For development and testing
-- **External supply**: Via the supply input terminal
-- **Battery**: Via the battery JST connector, with charging support
+- **External supply**: Via the supply input terminal (VIN)
+- **Battery**: Via the battery JST connector, with charging via the on-board MCP73831 charger
+
+On board, the **XL1509-5.0** buck generates the 5 V rail (`FB_5V`) and a pair of **AMS1117-3.3** LDOs regulate down to +3V3 — see the [A0 Base Board](./base-board#power) for the full chain.
 
 ## Wireless Communication
 
@@ -127,6 +129,6 @@ The A0 base board provides two expansion slots (BUS1 and BUS2) supporting the in
 - **WMBUS** — Wireless M-Bus metering radio
 - **E07-400M10S** — Sub-GHz (400 MHz, 10 dBm) radio
 
-Because the expansion slots use the **MikroE Click footprint**, the [MikroE Click boards™](https://www.mikroe.com/) ecosystem is also supported — see [Modules](./modules/modules#mikroe-click-compatibility).
+Because the expansion slots use the **MikroE Click footprint**, the [MikroE Click boards™](https://www.mikroe.com/) ecosystem is also supported — see [Modules](./modules#mikroe-click-compatibility).
 
-[Learn more about Modules](./modules/modules)
+[Learn more about Modules](./modules)

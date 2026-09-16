@@ -93,7 +93,7 @@ The A0 IoT Gateway is an ESP32-C6 (RISC-V, Wi-Fi 6, Bluetooth 5 LE, 802.15.4) ba
 
 ### Cold Chain / Asset Tracking (concept)
 
-> Concept — validated at radio level (NB-IoT + GNSS available), enclosure/power/sensor integration not yet specified in s0 hardware.
+> Concept — validated at radio level (NB-IoT + GNSS available), enclosure/power/sensor integration not yet specified in A0 hardware.
 
 - Temperature/humidity sensing over BLE/802.15.4
 - GNSS tracking via SIM7080G
@@ -107,3 +107,17 @@ The A0 IoT Gateway is an ESP32-C6 (RISC-V, Wi-Fi 6, Bluetooth 5 LE, 802.15.4) ba
 - **Power**: USB-C, external supply, or battery with charging
 - **Backhaul**: Add SIM7080G, WMBUS, or E07-400M10S module in BUS1/BUS2 as needed
 - **Complexity**: Minimal
+
+### Cellular Backhaul Gateway
+
+- **Use**: Meter or sensor collection with NB-IoT/LTE-M uplink where no Wi-Fi exists
+- **Modules**: WMBUS or E07-400M10S on BUS1 for collection, SIM7080G on BUS2 for backhaul
+- **Power**: External supply with battery backup for resilience
+- **Complexity**: Moderate — two modules share SPI/I2C, so stagger bus access in firmware
+
+### Battery-Powered Field Node
+
+- **Use**: Remote metering or asset tracking with GNSS geo-tagging
+- **Modules**: SIM7080G alone (cellular + GNSS via J4 LTE and J3 GNSS antennas, nano-SIM in U3)
+- **Power**: Battery on the JST connector with MCP73831 charging; budget for cellular transmit bursts (see [SIM7080G](./a0/modules/sim7080g#power-budget))
+- **Complexity**: Low hardware, careful power budgeting required
