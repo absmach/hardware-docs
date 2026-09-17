@@ -2,12 +2,11 @@
   "title": "Documentation",
   "pages": [
     "index",
-    "---Getting Started---",
-    "s0-gateway",
-    "s1-gateway",
-    "base-board",
+    "---A0---",
+    "a0",
+    "---A1---",
+    "a1",
     "---Resources---",
-    "use-cases",
-    "module-tests"
+    "use-cases"
   ]
 }

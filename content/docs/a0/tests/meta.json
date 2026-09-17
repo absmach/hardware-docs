@@ -1,0 +1,4 @@
+{
+  "title": "Tests",
+  "pages": ["esp32-c6", "wireless-mbus", "e07-400m10s", "sim7080g"]
+}

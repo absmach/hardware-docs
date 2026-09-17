@@ -1,359 +1,123 @@
 ---
 title: Use Cases
-description: Real-world applications and deployments of S0 IoT Gateway
+description: Real-world applications of A0 IoT Gateway
 ---
 
 # Use Cases
 
-The S0 IoT Gateway is designed for diverse IoT applications across smart metering, industrial automation, agriculture, and edge computing. Here are detailed use cases demonstrating the platform's versatility.
+The A0 IoT Gateway is an ESP32-C6 (RISC-V, Wi-Fi 6, Bluetooth 5 LE, 802.15.4) base board with two expansion slots (BUS1/BUS2) for SIM7080G (NB-IoT/LTE-M + GNSS), WMBUS (Wireless M-Bus metering), and E07-400M10S (sub-GHz 400 MHz) modules. Power via USB-C, external supply, or battery with charging. Software: Zephyr RTOS, WAMR WebAssembly edge logic, Magistrala (MQTT/CoAP/HTTP/WebSockets) integration, with secure boot, flash encryption, and TEE.
 
 ## Smart Metering
 
 ### Residential Utility Monitoring
 
-**Challenge**: A utility provider needs to remotely monitor electricity, gas, and water usage across hundreds of homes. Some homes have legacy wired M-Bus meters, while others use modern wireless M-Bus models.
+**Challenge**: Remotely monitor heat and water usage across apartment blocks with Wireless M-Bus meters.
 
 **Solution**:
 
-- Deploy S0 gateway in each apartment block
-- DIN-rail mount inside electrical cabinets using Base Board
-- Use Wireless M-Bus (RC-S2LP) to read meters without rewiring
-- Use Wired M-Bus via Base Board for legacy devices
-- Backhaul readings to utility's cloud via NB-IoT (SIM7080G)
-- Periodic uploads to Magistrala using MQTT
-- Retry logic ensures resilience in poor cellular areas
-- Power from 24V control panel supply with battery backup
+- Deploy A0 gateway per block
+- Read meters via WMBUS module — no rewiring
+- Backhaul via NB-IoT (SIM7080G)
+- Publish to Magistrala over MQTT
+- Battery-backed operation for resilience
 
 **Benefits**:
 
 - No truck rolls for meter reading
 - Real-time consumption monitoring
 - Leak detection and anomaly alerts
-- Support for mixed meter infrastructure
-- Reliable operation with battery backup
-
-**Technical Details**:
-
-```yaml
-Hardware:
-  - S0 Gateway with NB-IoT module
-  - Base Board with M-Bus transceiver
-  - External antenna for basement installation
-
-Connectivity:
-  - Wireless M-Bus: 868 MHz, Mode S1
-  - Wired M-Bus: 300-9600 baud
-  - NB-IoT: 15-minute update interval
-
-Data Flow: 1. Collect meter readings every 15 minutes
-  2. Log to SD card for redundancy
-  3. Aggregate and compress data
-  4. Upload via NB-IoT to Magistrala
-  5. Cloud processes and bills customers
-```
 
 ### District Heating Network
 
-**Challenge**: Monitor temperature, flow, and energy consumption across a district heating network with hundreds of distributed heat meters.
+**Challenge**: Monitor temperature, flow, and energy across distributed heat meters.
 
 **Solution**:
 
-- Install S0 gateways at strategic points throughout network
-- Collect data from wireless M-Bus heat meters
-- Real-time monitoring of network performance
-- Edge processing to detect anomalies
-- Cellular backhaul where wired connectivity unavailable
+- A0 gateways at strategic points
+- Collect from Wireless M-Bus heat meters
+- Edge filtering/aggregation via Wasm workloads
+- Cellular backhaul where no wired connectivity exists
 
 **Benefits**:
 
-- Optimize energy distribution
+- Optimized energy distribution
 - Rapid leak detection
-- Predictive maintenance
-- Improved customer billing accuracy
+- Improved billing accuracy
 
 ## Industrial IoT
 
-### Predictive Maintenance Platform
+### Sensor Data Collection
 
-**Challenge**: A manufacturing facility needs to monitor industrial machinery for early signs of failure to minimize downtime and maintenance costs.
+**Challenge**: Collect sensor data in secure, bandwidth-constrained industrial environments.
 
 **Solution**:
 
-- Deploy S0 gateways on critical equipment
-- Collect high-frequency sensor data:
-  - Vibration sensors via I2C
-  - Temperature sensors via SPI
-  - Pressure sensors via analog inputs
-- Local ML inference for real-time decisions
-- Send only alerts to central system
-- Historical data logging to SD card
+- A0 with Wi-Fi 6 / BLE / 802.15.4 for local sensor links
+- Wasm edge logic for filtering and threshold alerts
+- Encrypted uplink via NB-IoT or Wi-Fi to Magistrala
+- OTA updates and remote management
 
 **Benefits**:
 
-- Catch failures before they occur
-- Reduced network bandwidth usage
-- Real-time response to critical conditions
-- Reduced downtime and maintenance costs
+- Secure edge-to-cloud communication
+- Reduced uplink bandwidth via edge processing
 - Local operation during network outages
 
-**Technical Details**:
+### Facility Energy Monitoring
 
-```yaml
-Edge Processing:
-  - Wasm workload: 50KB FFT analysis
-  - Update rate: 10 Hz sensor sampling
-  - ML inference: <50ms latency
-  - Alert generation: Local threshold detection
-
-Connectivity:
-  - Primary: Ethernet via Base Board
-  - Backup: WiFi
-  - Emergency: NB-IoT SMS alerts
-
-Data Management:
-  - Local buffering: 7 days on SD card
-  - Upload: Alerts immediately, trends hourly
-  - Retention: 30 days cloud, 7 days local
-```
-
-### Factory Energy Monitoring
-
-**Challenge**: Monitor and optimize energy consumption across a production facility with hundreds of machines and systems.
+**Challenge**: Monitor energy consumption across a facility using wireless metering.
 
 **Solution**:
 
-- S0 gateways at electrical distribution points
-- M-Bus energy meters monitoring
-- Real-time power quality analysis
-- Integration with building management system
+- A0 gateways at distribution points
+- Wireless M-Bus metering radios
+- Real-time upload to building/energy management via Magistrala
 
 **Benefits**:
 
 - Identify energy waste
-- Peak demand management
-- Power quality monitoring
+- Peak demand insight
 - Cost optimization
-- Carbon footprint reduction
 
-## Agriculture & Environment
+## Smart Cities & Remote Monitoring
 
-### Precision Agriculture Gateway
+### City-Scale Metering
 
-**Challenge**: A farm operator wants to monitor soil moisture, weather conditions, and water flow across large fields far from any infrastructure.
-
-**Solution**:
-
-- Deploy S0 in weatherproof enclosures
-- Solar panel with battery backup
-- Sensors via I2C/SPI/UART interfaces:
-  - Soil moisture sensors
-  - Weather station
-  - Water flow meters
-- GNSS (via SIM7080G) for geo-tagging
-- NB-IoT for data backhaul
-- SD card for offline storage
-- Local processing for irrigation control
-
-**Benefits**:
-
-- Optimize water usage
-- Remote field monitoring
-- Automated irrigation control
-- Historical data analysis
-- Works in areas without infrastructure
-
-**Technical Details**:
-
-```yaml
-Deployment:
-  - IP67 enclosure
-  - 20W solar panel
-  - 12V 20Ah battery
-  - External LTE antenna on mast
-
-Sensors:
-  - 6x soil moisture (I2C)
-  - 1x weather station (UART)
-  - 1x flow meter (pulse counter)
-  - 1x GNSS module (internal)
-
-Operation:
-  - Sample interval: 15 minutes
-  - Upload interval: 1 hour
-  - Emergency alerts: Real-time via SMS
-  - Battery life: 7 days without sun
-```
-
-### Environmental Monitoring Network
-
-**Challenge**: Monitor air quality, noise levels, and weather across a city to provide public health data.
+**Challenge**: Large-scale metering with NB-IoT and sub-GHz coverage.
 
 **Solution**:
 
-- S0 gateways at lamp posts and buildings
-- Multi-sensor integration
-- Edge data validation and filtering
-- Real-time public dashboard
-- Alert system for threshold violations
+- WMBUS or sub-GHz (E07-400M10S) for meter collection
+- NB-IoT backhaul to Magistrala
+- GNSS (via SIM7080G) for asset geo-tagging where needed
 
-**Benefits**:
+### Cold Chain / Asset Tracking (concept)
 
-- Public health awareness
-- Pollution source identification
-- Real-time alerts
-- Long-term trend analysis
+> Concept — validated at radio level (NB-IoT + GNSS available), enclosure/power/sensor integration not yet specified in A0 hardware.
 
-## Edge Computing
-
-### Edge AI Inference Platform
-
-**Challenge**: Run AI inference at the edge for real-time decision making in security, quality control, or process monitoring applications.
-
-**Solution**:
-
-- Camera or sensor array connected to BeagleV-Fire
-- S0 provides connectivity and power management
-- TensorFlow Lite inference on Linux
-- Results sent via optimal connectivity
-
-**Benefits**:
-
-- Real-time inference (less than 100ms)
-- Privacy-preserving (data stays local)
-- Works offline
-- Reduced cloud costs
-- Low bandwidth usage
-
-**Technical Details**:
-
-```yaml
-Architecture:
-  - BeagleV-Fire: ML inference (TFLite)
-  - S0: Connectivity + data collection
-
-Performance:
-  - Inference: 50ms typical
-  - Preprocessing: 20ms (Wasm)
-  - Total latency: less than 100ms edge-to-decision
-
-Models:
-  - Object detection: MobileNet SSD
-  - Classification: ResNet-18 (quantized)
-  - Anomaly detection: Autoencoder
-```
-
-### Protocol Translation Gateway
-
-**Challenge**: Bridge legacy industrial protocols (Modbus, BACnet) with modern IoT platforms (MQTT, HTTP).
-
-**Solution**:
-
-- S0 collects data from legacy devices
-- BeagleV-Fire runs translation logic
-- Unified MQTT output to Magistrala
-- Bidirectional control
-
-**Benefits**:
-
-- Integrate legacy systems
-- Modernize without replacement
-- Flexible protocol support
-- Centralized management
-
-## Research & Development
-
-### Smart Factory Demonstrator (Ericsson ELASTIC)
-
-**Challenge**: Demonstrate secure, portable, and confidential workload execution from edge to cloud for future 6G-native architectures.
-
-**Solution**:
-
-- S0 as trusted IoT edge gateway
-- Wasm-based serverless execution
-- TEE-agnostic remote attestation
-- Lightweight monitoring mechanisms
-- Integration with ELASTIC IoT data fabric
-
-**Key Aspects**:
-
-- Trusted edge node for sensor data
-- Secure isolated execution
-- Platform and workload trust verification
-- Edge-to-cloud observability
-- Contribution to 6G IoT research
-
-**Benefits**:
-
-- Validate edge computing models
-- Research security mechanisms
-- Demonstrate 6G concepts
-- Open-source contribution
-
-## Commercial Deployments
-
-### Smart Building Management
-
-**Challenge**: Integrate HVAC, lighting, access control, and energy monitoring in commercial buildings.
-
-**Solution**:
-
-- S0 gateways throughout building
-- M-Bus for utility meters
-- BLE for occupancy sensors
-- WiFi for high-bandwidth devices
-- Ethernet backbone
-- Central building management system
-
-**Benefits**:
-
-- Energy optimization
-- Occupant comfort
-- Maintenance scheduling
-- Security integration
-- Regulatory compliance
-
-### Cold Chain Monitoring
-
-**Challenge**: Monitor temperature and humidity in refrigerated storage and transportation.
-
-**Solution**:
-
-- S0 with temperature/humidity sensors
-- GPS tracking via SIM7080G
-- Real-time alerts for threshold violations
-- Battery-powered for mobility
-- Cloud dashboard for fleet management
-
-**Benefits**:
-
-- Product quality assurance
-- Regulatory compliance
-- Rapid issue detection
-- Route optimization
-- Loss prevention
+- Temperature/humidity sensing over BLE/802.15.4
+- GNSS tracking via SIM7080G
+- Battery-powered operation
 
 ## Deployment Configurations
 
 ### Standalone Gateway
 
-- **Use**: Simple data collection
-- **Power**: Battery or USB
-- **Connectivity**: WiFi, BLE, NB-IoT
-- **Cost**: Lowest
+- **Use**: Data collection over on-board Wi-Fi 6 / BLE / 802.15.4
+- **Power**: USB-C, external supply, or battery with charging
+- **Backhaul**: Add SIM7080G, WMBUS, or E07-400M10S module in BUS1/BUS2 as needed
 - **Complexity**: Minimal
 
-### With Base Board
+### Cellular Backhaul Gateway
 
-- **Use**: Industrial installation
-- **Power**: 24V DC + battery backup
-- **Connectivity**: + Ethernet, M-Bus
-- **Features**: + SD card logging
-- **Mounting**: DIN-rail
+- **Use**: Meter or sensor collection with NB-IoT/LTE-M uplink where no Wi-Fi exists
+- **Modules**: WMBUS or E07-400M10S on BUS1 for collection, SIM7080G on BUS2 for backhaul
+- **Power**: External supply with battery backup for resilience
+- **Complexity**: Moderate — two modules share SPI/I2C, so stagger bus access in firmware
 
-### With BeagleV-Fire
+### Battery-Powered Field Node
 
-- **Use**: Edge computing, AI
-- **Power**: 5V/3A
-- **Processing**: Full Linux
-- **Features**: Advanced applications
-- **Development**: Standard tools
+- **Use**: Remote metering or asset tracking with GNSS geo-tagging
+- **Modules**: SIM7080G alone (cellular + GNSS via J4 LTE and J3 GNSS antennas, nano-SIM in U3)
+- **Power**: Battery on the JST connector with MCP73831 charging; budget for cellular transmit bursts (see [SIM7080G](./a0/modules/sim7080g#power-budget))
+- **Complexity**: Low hardware, careful power budgeting required

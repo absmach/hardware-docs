@@ -1,0 +1,36 @@
+---
+title: Modules
+description: Plug-in connectivity modules for the A0 base board — SIM7080G, WMBUS, E07-400M10S, and MikroE Click boards.
+---
+
+# Expansion Modules
+
+The **A0 base board** pushes all additional radio and cellular connectivity onto removable modules. It provides **two expansion slots — BUS1 and BUS2** — where modules can be plugged in and swapped depending on the deployment. See the [A0 Base Board](../base-board) for the slot pinouts, power rails, and the SW5 JTAG/BUS2 selector.
+
+## Supported Modules
+
+| Module                                              | Radio                       | Use Case                                            |
+| --------------------------------------------------- | --------------------------- | --------------------------------------------------- |
+| [SIM7080G](./sim7080g)                              | NB-IoT / LTE-M + GNSS       | Cellular uplink, asset tracking                     |
+| [WMBUS](./wmbus)                                    | Wireless M-Bus (EN 13757-4) | Utility meter reading                               |
+| [E07-400M10S](./e07-400m10s)                        | Sub-GHz 400 MHz, 10 dBm     | Private sensor networks, long-range low-power links |
+| [MikroE Click boards™](#mikroe-click-compatibility) | Various                     | Off-the-shelf Click ecosystem                       |
+
+## MikroE Click Compatibility
+
+In addition to the in-house modules, the A0 expansion slots (BUS1/BUS2) use the **same footprint as [MikroElektronika Click boards](https://www.mikroe.com/)**. This means the entire MikroE **Click™ ecosystem** — hundreds of off-the-shelf add-on boards covering GSM/LTE, LoRa, RF, sensors, storage, and more — can be plugged directly into the A0 base board.
+
+Click boards communicate over standard buses (UART, SPI, I2C) routed through the expansion slots, so firmware on the ESP32-C6 talks to them with ordinary peripherals and drivers.
+
+This gives the A0 gateway three levels of expandability:
+
+1. **In-house modules** — SIM7080G, WMBUS, and E07-400M10S, purpose-built for metering gateways.
+2. **MikroE Click boards™** — the whole off-the-shelf ecosystem, thanks to the shared footprint.
+3. **Custom boards** — any board designed to the same Click-compatible footprint.
+
+## References
+
+- SIMCom SIM7080G — [product page](https://www.simcom.com/product/SIM7080G.html) · [AT command manual (PDF)](https://www.simcom.com/download/list-510.html)
+- Radiocontrolli RC-S2LP-868 — [product page](https://www.radiocontrolli.com/en/radio-modules-868mhz/rc-s2lp-868/) · ST S2-LP [datasheet (PDF)](https://www.st.com/resource/en/datasheet/s2-lp.pdf)
+- EBYTE E07-400M10S — [LCSC C2965513](https://www.lcsc.com/product-detail/C2965513.html) · TI CC1101 [datasheet (PDF)](https://www.ti.com/lit/ds/symlink/cc1101.pdf)
+- Wireless M-Bus EN 13757-4 — [OMS specification](https://oms-group.org/)

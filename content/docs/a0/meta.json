@@ -1,0 +1,11 @@
+{
+  "title": "A0 Gateway",
+  "pages": [
+    "index",
+    "getting-started",
+    "base-board",
+    "modules",
+    "software",
+    "tests"
+  ]
+}

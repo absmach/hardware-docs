@@ -1,0 +1,167 @@
+---
+title: ESP32-C6 Boot Recovery & Hello World
+description: Diagnosing an ESP32-C6-MINI-1 boot loop (USB connecting/reconnecting) and verifying recovery with a minimal serial test
+---
+
+# ESP32-C6-MINI-1 Boot Recovery
+
+## Overview
+
+The **ESP32-C6-MINI-1/U** is the main microcontroller on the A0 board (RISC-V core, WiFi 6, BLE 5, 802.15.4). It runs from the board's `+3V3` rail (pair of AMS1117-3.3 LDOs, fed from the `VBAT`/charger input), and exposes a native USB-Serial/JTAG peripheral used for both flashing and debug logging.
+
+This page documents how to diagnose a **boot loop** on the ESP32-C6 — visible on the host as the board's USB port repeatedly disconnecting and reconnecting — and how to confirm the board is healthy again with a minimal serial "Hello World" sketch.
+
+## Symptom
+
+- The board's serial port (`/dev/ttyACM0`) appears and disappears every 2–3 seconds.
+- Arduino IDE (or any serial monitor) shows repeated reconnects instead of a stable session.
+- The serial log is flooded with:
+
+```
+invalid header: 0xffffffff
+invalid header: 0xffffffff
+...
+ESP-ROM:esp32c6-20220919
+Build:Sep 19 2022
+rst:0x7 (TG0_WDT_HPSYS),boot:0xc (SPI_FAST_FLASH_BOOT)
+Saved PC:0x400294a6
+invalid header: 0xffffffff
+...
+```
+
+## Diagnosis
+
+### 1. Correlate the USB churn with the kernel log
+
+The disconnect/reconnect cycle is the ESP32-C6's **own native USB-Serial/JTAG peripheral** resetting along with the whole chip — not a host-side USB/driver issue. Confirm with:
+
+```bash
+journalctl -k -n 200 --no-pager | grep -A6 "usb 1-1"
+```
+
+```
+usb 1-1: New USB device found, idVendor=303a, idProduct=1001, bcdDevice= 1.02
+usb 1-1: Product: USB JTAG/serial debug unit
+usb 1-1: Manufacturer: Espressif
+cdc_acm 1-1:1.0: ttyACM0: USB ACM device
+usb 1-1: USB disconnect, device number 58
+usb 1-1: new full-speed USB device number 59 using xhci_hcd
+...
+```
+
+`idVendor=303a` is Espressif's own native-USB VID — this is the SoC's built-in USB-JTAG/serial unit, not an external USB-UART bridge. The re-enumeration period lines up exactly with the `TG0_WDT_HPSYS` watchdog resets in the serial log.
+
+### 2. Read the loop itself
+
+The ROM bootloader is stuck trying to load a first-stage image from SPI flash:
+
+1. It reads the bootloader image header at flash offset `0x0` (app images live at `0x10000`).
+2. Gets back `0xffffffff` (all-ones — erased flash, or flash not responding).
+3. Spins until the Task Group 0 watchdog (`TG0_WDT_HPSYS`) fires.
+4. Chip resets, USB re-enumerates, loop repeats.
+
+### 3. Confirm with esptool
+
+If Arduino IDE's Serial Monitor is open, it holds the port and `esptool` will fail with `port is busy or doesn't exist` — close it first.
+
+```bash
+esptool.py --port /dev/ttyACM0 --chip esp32c6 flash_id
+```
+
+Expected output on a healthy connection (example — chip revision will vary):
+
+```
+Chip is ESP32-C6FH4 (QFN32) (revision v0.2)
+...
+Detected flash size: 4MB
+```
+
+Then dump the first bytes of flash to check for a valid bootloader:
+
+```bash
+esptool.py --port /dev/ttyACM0 --chip esp32c6 read_flash 0x0 0x100 flash_start.bin
+xxd flash_start.bin
+```
+
+A board stuck in this loop reads back **all `0xFF`** at offset `0x0` — confirming the flash has no bootloader/app image at all (erased, or never successfully flashed).
+
+```
+00000000: ffff ffff ffff ffff ffff ffff ffff ffff  ................
+00000010: ffff ffff ffff ffff ffff ffff ffff ffff  ................
+```
+
+## Fix: Reflash
+
+```bash
+arduino-cli compile --fqbn esp32:esp32:esp32c6 .
+arduino-cli upload --fqbn esp32:esp32:esp32c6 --port /dev/ttyACM0 .
+```
+
+`esptool`/`arduino-cli` drive the reset/boot-mode lines directly, so this works even while the board is actively looping — it does not need to be power-cycled first. If auto-reset fails, hold BOOT and tap RESET to force download mode.
+
+> **Board-specific gotcha**: the `esp32:esp32:esp32c6` board profile defaults **USB CDC On Boot to disabled**. With the default profile, `Serial` is routed to the physical UART0 pins, not the native USB port — so after flashing you'll see one clean boot (no more `invalid header` spam), but no application output over `/dev/ttyACM0`. Recompile/upload with the CDC option enabled to see `Serial` output on the same port used for flashing:
+>
+> ```bash
+> arduino-cli compile --fqbn "esp32:esp32:esp32c6:CDCOnBoot=cdc" .
+> arduino-cli upload --fqbn "esp32:esp32:esp32c6:CDCOnBoot=cdc" --port /dev/ttyACM0 .
+> ```
+
+## Hello World Demo
+
+A minimal sketch to confirm the board boots cleanly and holds a serial connection, without depending on any peripheral module (SIM7080G, WMBUS, E07-400M10S, etc.):
+
+```c
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("A0 board is alive - boot loop fixed!");
+}
+
+void loop() {
+  Serial.println("Hello from A0 (ESP32-C6)");
+  delay(1000);
+}
+```
+
+Build and flash with `CDCOnBoot=cdc` as shown above, then read the port:
+
+```bash
+python3 - <<'EOF'
+import serial, time
+ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.5)
+end = time.time() + 6
+buf = b""
+while time.time() < end:
+    data = ser.read(256)
+    if data:
+        buf += data
+print(buf.decode(errors='replace'))
+ser.close()
+EOF
+```
+
+Expected output — a stable, repeating print with no resets in between:
+
+```
+Hello from A0 (ESP32-C6)
+Hello from A0 (ESP32-C6)
+Hello from A0 (ESP32-C6)
+Hello from A0 (ESP32-C6)
+```
+
+A clean, uninterrupted stream like this (and a `journalctl -k` with no further `usb 1-1: USB disconnect` churn) confirms the boot loop is resolved.
+
+## Next Steps
+
+With the MCU booting cleanly, verify the BUS1 radio modules:
+
+- [Wireless M-Bus Testing](./wireless-mbus) — RC-S2LP (S2-LP) SPI bring-up on BUS1 (GPIO20/19/18, CS GPIO2, SDN GPIO1)
+- [E07-400M10S Sub-GHz](./e07-400m10s) — CC1101 SPI bring-up on the same BUS1 slot (GDO0 GPIO1, GDO1 GPIO0)
+- [SIM7080G Bring-up](./sim7080g) — NB-IoT/LTE-M + GNSS UART bring-up on BUS1 (TX GPIO16, RX GPIO17, PWRKEY GPIO1)
+
+## References
+
+- ESP32-C6 SoC — [product page](https://www.espressif.com/en/products/socs/esp32-c6) · [datasheet (PDF)](https://www.espressif.com/sites/default/files/documentation/esp32-c6_datasheet_en.pdf)
+- ESP32-C6-MINI-1 module — [dev-kit docs](https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitm-1/index.html)
+- Arduino-ESP32 C6 support — [installation](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html)
+- esptool — [documentation](https://docs.espressif.com/projects/esptool/en/latest/esp32c6/)

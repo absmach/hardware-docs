@@ -1,0 +1,116 @@
+---
+title: Getting Started with A0
+description: Quick start guide for A0 IoT Gateway
+---
+
+# Getting Started with A0
+
+This guide will help you get up and running with the A0 IoT Gateway.
+
+## What You'll Need
+
+### Hardware
+
+- A0 IoT Gateway board (base board + ESP32-C6 module)
+- USB-C cable for power and programming
+- Optional: plug-in module (SIM7080G / WMBUS / E07-400M10S) for your radio
+
+### Software
+
+- [Zephyr SDK](https://docs.zephyrproject.org/latest/develop/getting_started/index.html)
+- Serial terminal (minicom, screen, or PuTTY)
+- Git
+
+> **JTAG vs BUS2 — pick one**: DIP switch **SW5** routes GPIO4–GPIO7 either to the JTAG header (J10) or to the BUS2 UART/I2C lines. **BUS2 UART or I2C and JTAG cannot be used simultaneously** — set SW5 to the JTAG side for debugging, or to the BUS2 side for a BUS2 module. See the [A0 Base Board](./base-board#sw5--jtag--bus2-selector) for details.
+
+### Accounts
+
+- [Magistrala](https://cloud.magistrala.absmach.eu) account (cloud or local instance)
+- Optional: NB-IoT/LTE-M SIM card with data plan
+
+## Development Environment Setup
+
+### Install Zephyr OS
+
+To program and build firmware for the A0 board, install **Zephyr OS** from the official website:
+
+[https://docs.zephyrproject.org/latest/develop/getting_started/index.html](https://docs.zephyrproject.org/latest/develop/getting_started/index.html)
+
+Zephyr provides:
+
+- Hardware abstraction for ESP32-C6 peripherals
+- Real-time task scheduling
+- Networking and protocol stacks
+- Secure communication and TLS support
+
+Once Zephyr is installed, you can build and flash applications directly to the A0 board using `west`.
+
+### Clone the Embedded Repository
+
+Zephyr code for the various protocols can be accessed by cloning the [Embedded Repository](https://github.com/absmach/embedded):
+
+```bash
+git clone https://github.com/absmach/embedded
+```
+
+## Magistrala Setup
+
+1. Navigate to [Magistrala](https://cloud.magistrala.absmach.eu) and sign up.
+
+2. Create a domain, channel, and client.
+
+3. Connect the client to the channel you created.
+
+4. Note down the `CHANNELID`, `DOMAINID`, `CLIENTID`, and `CLIENTSECRET` — you will need these when configuring firmware.
+
+## Uploading Code
+
+Before uploading any code, be sure to have activated a virtual environment as guided in the [Zephyr documentation](https://docs.zephyrproject.org/latest/develop/getting_started/index.html).
+
+Download and install the binary blobs that the Espressif HAL needs:
+
+```bash
+west blob fetch hal_espressif
+```
+
+Navigate to the Zephyr protocol examples:
+
+```bash
+cd embedded/targets/zephyr
+ls
+```
+
+Choose the protocol you want to communicate over by moving into that directory. Make sure the directory contains:
+
+```
+CMakeLists.txt
+prj.conf
+src/
+```
+
+Change the variables in `src/config.h` to match your SuperMQ environment:
+
+- `CLIENTID`
+- `CLIENTSECRET`
+- `DOMAINID`
+- `CHANNELID`
+
+Build the code:
+
+```bash
+west build -p always -b esp32c6_devkitc
+```
+
+The board parameter can be changed to whichever board you are using as long as it is recognized by Zephyr. See [Zephyr supported boards](https://docs.zephyrproject.org/latest/boards/index.html#) for more information.
+
+To upload code to the A0 and monitor the serial output:
+
+```bash
+west flash
+west espressif monitor
+```
+
+## Next Steps
+
+- [Software Overview](./software) — Communication protocols and examples
+- [Hardware Tests](./tests/esp32-c6) — Verify the board boots, then bring up a radio module

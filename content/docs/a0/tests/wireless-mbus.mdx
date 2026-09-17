@@ -1,0 +1,220 @@
+---
+title: Wireless M-Bus
+description: RC-S2LP Wireless M-Bus transceiver overview, hardware connection, and test procedure
+---
+
+# RC-S2LP Wireless M-Bus Transceiver
+
+## Introduction
+
+The **RC-S2LP** is a sub-GHz RF transceiver module based on the **STMicroelectronics S2-LP** radio IC. It is commonly used in **Wireless M-Bus (wM-Bus)**, **smart metering**, and **low-power IoT gateway** applications operating in the **868 MHz ISM band**.
+
+In the **A0 board**, the RC-S2LP is responsible for receiving and transmitting Wireless M-Bus frames from devices such as heat meters, water meters, and gas meters.
+
+## What the RC-S2LP Module Is Used For
+
+The RC-S2LP enables:
+
+- Wireless M-Bus communication (T1, T2, C1, C2 modes)
+- Sub-GHz long-range communication
+- Low-power RF reception from battery-powered meters
+- Gateway-to-meter RF communication
+- Custom proprietary RF protocols
+
+Typical applications include:
+
+- Smart utility meters
+- IoT gateways
+- Industrial telemetry
+- Building automation systems
+
+## Key Specifications
+
+| Feature           | Description                       |
+| ----------------- | --------------------------------- |
+| RF IC             | STMicroelectronics S2-LP          |
+| Frequency Band    | 868 MHz ISM band                  |
+| Modulation        | 2-FSK, GFSK, OOK, MSK             |
+| Data Rate         | Up to 500 kbps                    |
+| Output Power      | Up to +14 dBm                     |
+| Sensitivity       | Down to −130 dBm (mode-dependent) |
+| Interface         | SPI                               |
+| Operating Voltage | 1.8 V – 3.6 V                     |
+| Low-Power Modes   | Sleep, Standby                    |
+
+## Hardware Connection
+
+The RC-S2LP communicates with the host MCU using **SPI** and several control signals.
+
+### Required Signals
+
+| Signal | Description     |
+| ------ | --------------- |
+| MOSI   | SPI Master Out  |
+| MISO   | SPI Master In   |
+| SCK    | SPI Clock       |
+| CS     | SPI Chip Select |
+| VCC    | 3.3 V supply    |
+| GND    | Ground          |
+| RF     | 868 MHz antenna |
+
+### Connection on the A0 Board (BUS 1)
+
+On the A0 board, the RC-S2LP module plugs into **BUS 1** — the pair of 8-pin headers **J1 + J3**. (The WMBUS module also fits BUS2 per its README; pin numbers below are BUS1.) These pins are confirmed against the board netlist (J1/4=SCK=U4/26=GPIO20, J1/5=MISO=U4/25=GPIO19, J1/6=MOSI=U4/24=GPIO18, J1/2=MiBUS1_2=U4/13=GPIO1, J1/3=MiBUS1_3=U4/5=GPIO2, J1/7=+3V3, J1/8=GND, J3/7=FB_5V) and verified working on hardware (see [Verified Result](#verified-result) below):
+
+| RC-S2LP Pin | MCU Pin (ESP32-C6) | BUS1 Header Pin     |
+| ----------- | ------------------ | ------------------- |
+| SCK         | GPIO20             | J1 pin 4            |
+| MISO        | GPIO19             | J1 pin 5            |
+| MOSI        | GPIO18             | J1 pin 6            |
+| CSN (CS)    | GPIO2              | J1 pin 3            |
+| SDN         | GPIO1              | J1 pin 2            |
+| VCC         | +3V3               | J1 pin 7            |
+| GND         | GND                | J1 pin 8 / J3 pin 8 |
+
+> **Use the 3V3 pin, not FB_5V**: J3 pin 7 on the same BUS1 connector carries the board's 5V rail (`FB_5V`). The RC-S2LP is only rated 1.8–3.6V — power it from **J1 pin 7 (+3V3)**, never from J3 pin 7.
+
+`SDN` (shutdown) is active-high shutdown / active-low enable — drive it low to bring the chip out of reset before talking to it over SPI.
+
+> Ensure a **proper 868 MHz antenna** is connected before transmitting.
+
+## Software Test Procedure
+
+### Test Objective
+
+The test verifies that:
+
+- The RC-S2LP is powered correctly
+- SPI communication is functional
+- Registers can be read and written
+- RF transmission and reception work
+
+### SPI Communication Test
+
+This test resets the RC-S2LP and reads back its `DEVICE_INFO1`/`DEVICE_INFO0` registers (`PARTNUM`/`VERSION`). A genuine S2-LP always reports `PARTNUM = 0x03` — that single byte is enough to confirm the SPI link, CS, and SDN lines are all wired correctly, without needing an antenna or a meter in range.
+
+> **Note on the SPI protocol**: the S2-LP does **not** use the CC1101-style `reg | 0x80` read convention. It uses distinct header bytes — `0x00` = WRITE, `0x01` = READ, `0x80` = COMMAND STROBE — each followed by a register/command byte. Using the wrong convention will silently talk to the wrong registers.
+
+```c
+#include <SPI.h>
+
+// SPI pins - A0 board, BUS1 (J1 header)
+#define PIN_SPI_SCK  20  // J1 pin 4
+#define PIN_SPI_MISO 19  // J1 pin 5
+#define PIN_SPI_MOSI 18  // J1 pin 6
+#define CS_PIN        2  // J1 pin 3 (S2LP CSN)
+#define SDN_PIN       1  // J1 pin 2 (S2LP SDN - shutdown/enable)
+
+// S2-LP SPI header bytes
+#define S2LP_WRITE  0x00
+#define S2LP_READ   0x01
+#define S2LP_STROBE 0x80
+
+// S2-LP command strobes
+#define CMD_SRES 0x70  // Reset
+
+// S2-LP register map (device identification + state)
+#define REG_DEVICE_INFO1 0xF0  // PARTNUM, expect 0x03
+#define REG_DEVICE_INFO0 0xF1  // VERSION
+#define REG_MC_STATE0    0xC0  // state machine status
+
+SPIClass *s2lpSpi = NULL;
+
+void s2lpWriteReg(uint8_t addr, uint8_t value) {
+  digitalWrite(CS_PIN, LOW);
+  s2lpSpi->transfer(S2LP_WRITE);
+  s2lpSpi->transfer(addr);
+  s2lpSpi->transfer(value);
+  digitalWrite(CS_PIN, HIGH);
+}
+
+uint8_t s2lpReadReg(uint8_t addr) {
+  digitalWrite(CS_PIN, LOW);
+  s2lpSpi->transfer(S2LP_READ);
+  s2lpSpi->transfer(addr);
+  uint8_t value = s2lpSpi->transfer(0x00);
+  digitalWrite(CS_PIN, HIGH);
+  return value;
+}
+
+void s2lpStrobe(uint8_t cmd) {
+  digitalWrite(CS_PIN, LOW);
+  s2lpSpi->transfer(S2LP_STROBE);
+  s2lpSpi->transfer(cmd);
+  digitalWrite(CS_PIN, HIGH);
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  Serial.println("=== RC-S2LP (868 MHz wM-Bus) Test - A0 BUS1 ===");
+
+  pinMode(CS_PIN, OUTPUT);
+  digitalWrite(CS_PIN, HIGH);
+
+  // Bring the chip out of shutdown: SDN high = shutdown, SDN low = active.
+  // Pulse high first to guarantee a clean reset from an unknown state.
+  pinMode(SDN_PIN, OUTPUT);
+  digitalWrite(SDN_PIN, HIGH);
+  delay(10);
+  digitalWrite(SDN_PIN, LOW);
+  delay(50); // allow POR / crystal settle before talking over SPI
+
+  s2lpSpi = new SPIClass(FSPI);
+  s2lpSpi->begin(PIN_SPI_SCK, PIN_SPI_MISO, PIN_SPI_MOSI, CS_PIN);
+  s2lpSpi->setFrequency(1000000);
+  s2lpSpi->setDataMode(SPI_MODE0);
+
+  Serial.println("Sending SRES (software reset)...");
+  s2lpStrobe(CMD_SRES);
+  delay(100);
+
+  uint8_t partnum = s2lpReadReg(REG_DEVICE_INFO1);
+  uint8_t version = s2lpReadReg(REG_DEVICE_INFO0);
+  uint8_t state   = s2lpReadReg(REG_MC_STATE0);
+
+  Serial.print("PARTNUM  (0xF0): 0x"); Serial.println(partnum, HEX);
+  Serial.print("VERSION  (0xF1): 0x"); Serial.println(version, HEX);
+  Serial.print("MC_STATE (0xC0): 0x"); Serial.println(state, HEX);
+
+  if (partnum == 0x03) {
+    Serial.println("RESULT: PARTNUM matches S2-LP (0x03) - SPI link is good.");
+  } else if (partnum == 0x00 || partnum == 0xFF) {
+    Serial.println("RESULT: No response (0x00/0xFF). Check CS/SDN wiring.");
+  } else {
+    Serial.println("RESULT: Unexpected PARTNUM - double check register");
+    Serial.println("        addresses against the S2-LP datasheet.");
+  }
+}
+
+void loop() {
+  uint8_t state = s2lpReadReg(REG_MC_STATE0);
+  Serial.print("MC_STATE: 0x");
+  Serial.println(state, HEX);
+  delay(2000);
+}
+```
+
+### Verified Result
+
+Run on the A0 board with the RC-S2LP module seated on BUS1 (`esp32:esp32:esp32c6:CDCOnBoot=cdc`):
+
+```
+=== RC-S2LP (868 MHz wM-Bus) Test - A0 BUS1 ===
+Sending SRES (software reset)...
+PARTNUM  (0xF0): 0x3
+VERSION  (0xF1): 0xC1
+MC_STATE (0xC0): 0x0
+RESULT: PARTNUM matches S2-LP (0x03) - SPI link is good.
+MC_STATE: 0x0
+MC_STATE: 0x0
+```
+
+`PARTNUM = 0x03` confirms the SPI bus, CS, and SDN lines are all correctly wired per the table above, and the module powers up and resets cleanly. This confirms SPI-level bring-up only — RF transmit/receive against a real wM-Bus meter is a separate follow-up test.
+
+## References
+
+- ST S2-LP transceiver — [product page](https://www.st.com/en/wireless-connectivity/s2-lp.html) · [datasheet (PDF)](https://www.st.com/resource/en/datasheet/s2-lp.pdf)
+- Radiocontrolli RC-S2LP-868 module — [product page](https://www.radiocontrolli.com/en/radio-modules-868mhz/rc-s2lp-868/)
+- Wireless M-Bus EN 13757-4 — [OMS specification](https://oms-group.org/)

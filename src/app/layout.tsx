@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     default: "Documentation — Abstract Machines Hardware",
   },
   description:
-    "Open-source IoT gateway hardware documentation. S0 and S1 gateways for smart metering, industrial IoT, and edge computing.",
+    "Open-source IoT gateway hardware documentation. A0 and A1 gateways for smart metering, industrial IoT, and edge computing.",
 };
 
 export default function Layout({ children }: LayoutProps<"/">) {

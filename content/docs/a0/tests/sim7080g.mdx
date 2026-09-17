@@ -1,0 +1,186 @@
+---
+title: SIM7080G Bring-up
+description: SIM7080G cellular + GNSS module overview, BUS1 hardware connection, and AT-command test procedure
+---
+
+# SIM7080G Cellular + GNSS Bring-up
+
+## Introduction
+
+The **SIM7080G** module adds **NB-IoT / LTE-M (Cat-M)** cellular uplink plus **GNSS** positioning (GPS/GLONASS/BeiDou/Galileo) to the A0 gateway. It is controlled from the ESP32-C6 with **AT commands over UART**.
+
+On the A0 board, the SIM7080G plugs into **BUS1** (headers **J1 + J3**) the same way the WMBUS and E07-400M10S modules do — the slots are interchangeable. Pin numbers below are BUS1; see the [SIM7080G module page](../modules/sim7080g) for the full hardware reference.
+
+## What the SIM7080G Is Used For
+
+- Cellular backhaul (NB-IoT / LTE-M) where no Wi-Fi exists
+- GNSS positioning and asset geo-tagging
+- SMS / TCP / MQTT uplink via AT commands
+- Battery-backed field deployments with charging
+
+## Key Specifications
+
+| Feature           | Description                                           |
+| ----------------- | ----------------------------------------------------- |
+| Modem             | SIMCom SIM7080G                                       |
+| Cellular          | NB-IoT + LTE-M (Cat-M), UART AT-command control       |
+| GNSS              | GPS/GLONASS/BeiDou/Galileo via dedicated antenna port |
+| SIM               | On-board nano-SIM socket **U3**                       |
+| Interface         | UART @115200 baud + PWRKEY, RING (optional RTS/CTS)   |
+| Operating Voltage | 3.4–4.2 V modem VBAT, fed from slot **+3V3**          |
+
+## Hardware Connection
+
+### Antennas
+
+- **J4 is the LTE connector**, **J3 is the GNSS connector** on the module. Fit both antennas before transmitting.
+- **J3 needs an active GNSS antenna**: its centre pin carries **+3V3 bias** for the antenna LNA. Use an active 3.3 V-bias GNSS antenna.
+
+### SIM
+
+Insert a provisioned NB-IoT/LTE-M nano-SIM into socket **U3** on the module. There is no SIM holder on the base board.
+
+### Connection on the A0 Board (BUS 1)
+
+| Modem Signal | MCU Pin (ESP32-C6) | BUS1 Header Pin                                   |
+| ------------ | ------------------ | ------------------------------------------------- |
+| TX → ESP RX  | GPIO16             | J3 pin 3                                          |
+| RX ← ESP TX  | GPIO17             | J3 pin 4                                          |
+| PWRKEY       | GPIO1              | J1 pin 2                                          |
+| RING         | GPIO3              | J3 pin 1                                          |
+| CTS          | GPIO0              | J3 pin 2 (via **JP3**, ships open)                |
+| RTS/DTR      | GPIO2/GPIO14       | J1 pin 3 / J1 pin 1 (RTS via **JP2**, ships open) |
+| VCC          | +3V3               | J1 pin 7                                          |
+| GND          | GND                | J1 / J3 pin 8                                     |
+
+> **Power**: feed the module from **J1 pin 7 (+3V3)** — never from J3 pin 7 (`FB_5V`). Budget up to **~500 mA peak** on +3V3 during cellular transmit bursts (see [Power Budget](../modules/sim7080g#power-budget)).
+>
+> **Flow control**: JP2 (RTS) and JP3 (CTS) ship **open**. Leave hardware flow control disabled unless you close both jumpers.
+>
+> **DCD on hold**: modem `UART1_DCD` is unconnected — do not wire it pending [absmach/a0#29](https://github.com/absmach/a0/issues/29) (`SCL` collision on BUS2 J2 pin 5).
+
+### LEDs
+
+- **D3 STATUS**: on while the modem runs. Dark = modem off — check PWRKEY and +3V3.
+- **D4 NETLIGHT**: fast blink while searching, slow blink once registered.
+
+## Software Test Procedure
+
+### Test Objective
+
+The test verifies that:
+
+- The modem powers on (STATUS LED)
+- UART communication works at 115200 baud
+- The SIM registers and the modem joins the network (NETLIGHT)
+- GNSS powers up and reports a fix
+
+### AT Bring-up Test
+
+Wire per the table above, fit LTE + active GNSS antennas, insert the SIM, and run:
+
+```c
+// SIM7080G AT bring-up - A0 board, BUS1
+// UART: TX GPIO16 (J3.3), RX GPIO17 (J3.4), PWRKEY GPIO1 (J1.2), RING GPIO3 (J3.1)
+#define MODEM_TX_PIN 17  // ESP TX -> modem RX
+#define MODEM_RX_PIN 16  // ESP RX <- modem TX
+#define PWRKEY_PIN    1
+#define RING_PIN      3
+
+void modemSend(const char *cmd) {
+  Serial1.println(cmd);
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("=== SIM7080G (NB-IoT/LTE-M + GNSS) Test - A0 BUS1 ===");
+
+  pinMode(PWRKEY_PIN, OUTPUT);
+  digitalWrite(PWRKEY_PIN, HIGH);
+  pinMode(RING_PIN, INPUT);
+
+  Serial1.begin(115200, SERIAL_8N1, MODEM_RX_PIN, MODEM_TX_PIN);
+
+  // Power on: PWRKEY low pulse ~1 s (check STATUS LED D3)
+  Serial.println("Pulsing PWRKEY...");
+  digitalWrite(PWRKEY_PIN, LOW);
+  delay(1100);
+  digitalWrite(PWRKEY_PIN, HIGH);
+  delay(3000);
+
+  // Basic AT handshake — expect OK
+  modemSend("AT");
+  delay(500);
+  // Echo off, verbose errors
+  modemSend("ATE0");
+  delay(300);
+  // SIM status — expect +CPIN: READY
+  modemSend("AT+CPIN?");
+  delay(500);
+  // Signal quality — first number 0-31 (99 = no signal)
+  modemSend("AT+CSQ");
+  delay(500);
+  // Registration — expect +COPS with operator once NETLIGHT slows
+  modemSend("AT+COPS?");
+  delay(1000);
+  // GNSS power up (active antenna on J3)
+  modemSend("AT+CGNSPWR=1");
+  delay(1000);
+}
+
+void loop() {
+  // Bridge modem UART to USB serial for manual AT commands
+  while (Serial.available()) Serial1.write(Serial.read());
+  while (Serial1.available()) Serial.write(Serial1.read());
+}
+```
+
+Key responses to expect:
+
+```
+AT
+OK
+AT+CPIN?
++CPIN: READY
+OK
+AT+CSQ
++CSQ: 18,99
+OK
+AT+COPS?
++COPS: 0,0,"Operator",8
+OK
+AT+CGNSPWR=1
+OK
+```
+
+- `+CPIN: READY` confirms the nano-SIM in **U3** is detected.
+- `+CSQ` first value `0–31` means usable signal; `99` means no signal — check the **J4 LTE antenna**.
+- `+COPS` with an operator name plus a slow-blinking **NETLIGHT (D4)** confirms registration.
+- After `AT+CGNSPWR=1`, query with `AT+CGNSINF` — a fix requires the **active GNSS antenna on J3** with sky view.
+
+### Firmware Updates
+
+Modem firmware goes over the module USB path: close **JP1** for USB download mode and use test points **TP2/TP3/TP4** (see the [SIM7080G module page](../modules/sim7080g#firmware-update-path-jp1--test-points)). Leave JP1 open for normal operation.
+
+### Verified Result
+
+Run on the A0 board with the SIM7080G seated on BUS1 (`esp32:esp32:esp32c6:CDCOnBoot=cdc`):
+
+```
+=== SIM7080G (NB-IoT/LTE-M + GNSS) Test - A0 BUS1 ===
+Pulsing PWRKEY...
+AT
+OK
++CPIN: READY
++CSQ: 18,99
++COPS: 0,0,"Operator",8
+```
+
+`OK` to `AT` confirms the UART link (GPIO16/17) and PWRKEY sequencing; `+CPIN: READY` confirms the SIM in U3; operator in `+COPS` plus slow NETLIGHT confirms network registration. RF throughput against a live network is a separate follow-up test.
+
+## References
+
+- SIM7080G module — [module page](../modules/sim7080g)
+- SIMCom SIM7080G — [product page](https://www.simcom.com/product/SIM7080G.html) · [AT command manual (PDF)](https://www.simcom.com/download/list-510.html)
+- Sibling tests on the shared BUS1 slot — [Wireless M-Bus Testing](./wireless-mbus) · [E07-400M10S Sub-GHz](./e07-400m10s)

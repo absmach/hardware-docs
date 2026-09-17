@@ -42,7 +42,7 @@ export function baseOptions(): BaseLayoutProps {
     searchToggle: {
       enabled: true,
     },
-    githubUrl: "https://github.com/absmach/s0",
+    githubUrl: "https://github.com/absmach/a0",
     nav: {
       title: <>{logo}</>,
       transparentMode: "top",
