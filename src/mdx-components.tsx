@@ -12,11 +12,12 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
         <Pre>{props.children}</Pre>
       </CodeBlock>
     ),
-    img: (props: React.ComponentProps<typeof ImageZoom>) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    img: ((props: any) => {
       const src =
         typeof props.src === "string" ? assetPath(props.src) : props.src;
       return <ImageZoom {...props} src={src} />;
-    },
+    }) as NonNullable<MDXComponents["img"]>,
     ...components,
   };
 }
